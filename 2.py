@@ -41,13 +41,13 @@ def delButton(tree):
 
 
 flg = 0
-arrdata = []
-index = 0
+MPS_obj_que = []
+MPS_que_index = 0
 """录入"""
 def lr():
     global flg
-    global arrdata
-    global index
+    global MPS_obj_que
+    global MPS_que_index
 
     name = bl.get()
     if name != '':
@@ -60,8 +60,8 @@ def lr():
 
         for it in arrdata:
             s = ["第",0,"次录入:",it.name]
-            s[1]=it.index+1
-            tree_view.insert('',it.index,values=(s,''))
+            s[1]= it.MPS_que_index + 1
+            tree_view.insert('', it.MPS_que_index, values=(s, ''))
         index = index + 1
 
 
@@ -69,9 +69,9 @@ def show():
     global flg
     if flg == 1:
         results=connect("select * from bom")
-        index2 = index
+        index2 = MPS_que_index
 
-        for x in arrdata:
+        for x in MPS_obj_que:
             flg2 = 0
             """先寻找对应的序号"""
             for y in results:
@@ -97,9 +97,9 @@ def show():
                 x.outp=["未找到资产流入来源"]
         
         delButton(tree_view)
-        for x in arrdata:
+        for x in MPS_obj_que:
             s=''.join(x.outp)
-            n = ["第",x.index+1,"次录入:",x.name]
+            n = ["第", x.MPS_que_index + 1, "次录入:", x.name]
             tree_view.insert('',index2,values=(n,s))
     flg = 0
         
@@ -109,8 +109,8 @@ def show():
 
 def restart():
     global flg
-    global arrdata
-    global index
+    global MPS_obj_que
+    global MPS_que_index
 
     delButton(tree_view)
     flg = 0

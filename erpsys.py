@@ -3,10 +3,7 @@ import math
 import operator
 
 
-ans = []
-MPS_output_que = []
-
-class MPS:
+class MpsObj:
     def __init__(self, pname, require, deadline, index):
         self.pname = pname
         self.require = require
@@ -18,78 +15,30 @@ class MPS:
             self.mark = deadline
 
 
-"""录入数据"""
-arrdata = []
-index = 0
-index2 = 0
-flg = 0
+ans = []
+MPS_output_que = []
+MPS_obj_que = []
+
+MPS_que_index = 0
+ans_index = 0
 
 
 def add(pname, require, deadline):
-    """点击 录入 则会重置time,从而使得重新提交后的rest()按照最开始的计算"""
     global time
-    """控制show不可连点,只有在录入之后可以点击一次"""
-    global flg
-
-    global arrdata
-    global sortdata
-    global index
-    global index2
+    global MPS_obj_que
+    global MPS_que_index
+    global ans_index
 
     if pname != '' and require != '' and deadline != '':
         time = 0
-        flg = 1
+
         deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d').date()
-        arrdata.append(MPS(pname, require, deadline, index))
-        MPS_output_que.append([pname, require, deadline, index])
-        index = index + 1  # 录入一次就+1
-        index2 = index
+        MPS_obj_que.append(MpsObj(pname, require, deadline, MPS_que_index))
+        MPS_output_que.append([pname, require, deadline, MPS_que_index])
+        MPS_que_index = MPS_que_index + 1  # 录入一次就+1
+        ans_index = MPS_que_index
 
-        cmpfun = operator.attrgetter('index')
-        arrdata.sort(key=cmpfun)
-
-
-        cal(arrdata)
-
-
-"""计算哪个计划最先执行,再show()里面会调用"""
-sortdata = []
-
-
-def cal(arrdata):
-    global sortdata
-    sortdata = arrdata  # arrdata的内容不变
-    for x in range(0, index):
-        for y in range(x + 1, index):
-            c = sortdata[y].mark - sortdata[x].mark
-            c = c.days
-            if c < 0:
-                tmp = sortdata[x]
-                sortdata[x] = sortdata[y]
-                sortdata[y] = tmp
-            elif c == 0:
-                if sortdata[y].index < sortdata[x].index:
-                    tmp = sortdata[x]
-                    sortdata[x] = sortdata[y]
-                    sortdata[y] = tmp
-
-
-"""重置按钮"""
-
-
-def restart():
-    global time
-    global index
-    global index2
-    global arrdata
-    global sortdata
-    global flg
-    time = 0
-    index = 0
-    index2 = 0
-    flg = 0
-    arrdata = []
-    sortdata = []
+        MPS_obj_que.sort(key=lambda item: item.deadline)
 
 
 time = 0  # 用来记录第几次录入的计划，并且第一次的计划才会用到数据库的库存值
@@ -97,9 +46,7 @@ rest_list = [0]
 
 
 def show_result():
-    global flg
-    if flg == 1:
-        global index2
+        global ans_index
         global time
         global rest_list
 
@@ -124,7 +71,14 @@ def show_result():
                     self.next4 = newNode
 
         from connectdb import connect
-        results = connect("select * from compose")
+        sql_state="""
+            SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
+            supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
+            inventory."供应商提前期" 
+            FROM inventory,supply,store 
+            WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
+        """
+        results = connect(sql_state)
         print(results)
         """树建立"""
         for it in results:
@@ -143,53 +97,55 @@ def show_result():
 
         """深度遍历"""
 
-        def sl_dfs(aim, number, treenode, rest, time):
-            global index2
+        def sl_dfs(aim, number, treenode, rest, end_time):
+            global ans_index
             if treenode.key[1] == aim:
                 if number > rest:
                     treenode.need = number - rest
                     rest = 0
-                stime = time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
+                start_time = end_time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
                 if number <= rest:
                     rest = rest - number
                     treenode.need = 0
 
-                index2 += 1
-                ans.append([treenode.key[1], treenode.need, treenode.key[2], stime, time])
+                ans_index += 1
+                ans.append([treenode.key[1], treenode.need, treenode.key[2], start_time, end_time])
 
             """开始日期=下一级项目的结束日期"""
-            time = time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
+            end_time = end_time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
 
             if treenode.next1 == None:
                  return rest
             else:
                 number1 = math.ceil(number * treenode.next1.key[3] / (1 - treenode.next1.key[4]))
-                rest = sl_dfs(aim, number1, treenode.next1, rest, time)
+                rest = sl_dfs(aim, number1, treenode.next1, rest, end_time)
 
                 if treenode.next2 == None:
                     return rest
                 else:
                     number2 = math.ceil(number * treenode.next2.key[3] / (1 - treenode.next2.key[4]))
 
-                    rest = sl_dfs(aim, number2, treenode.next2, rest, time)
+                    rest = sl_dfs(aim, number2, treenode.next2, rest, end_time)
 
                     if treenode.next3 == None:
                         return rest
                     else:
                         number3 = math.ceil(number * treenode.next3.key[3] / (1 - treenode.next3.key[4]))
 
-                        rest = sl_dfs(aim, number3, treenode.next3, rest, time)
+                        rest = sl_dfs(aim, number3, treenode.next3, rest, end_time)
 
                         if treenode.next4 == None:
                             return rest
                         else:
                             number4 = math.ceil(number * treenode.next4.key[3] / (1 - treenode.next4.key[4]))
 
-                            rest = sl_dfs(aim, number4, treenode.next4, rest, time)
+                            rest = sl_dfs(aim, number4, treenode.next4, rest, end_time)
             return rest
 
-        name_list1 = ['眼镜', '镜框', '螺钉', '镜架', '镜腿', '鼻托', '镜片']
-        """寻找剩余库存"""
+        name_list=[]
+        supply = connect('select supply."名称" FROM supply')
+        for item in supply:
+            name_list.append(item[0])
 
         def rest_dfs(name, treenode):
             if treenode == None:
@@ -205,42 +161,44 @@ def show_result():
 
         """剩余库存表"""
         if time == 0:
-            rest_list = [rest_dfs(name_list1[0], r), rest_dfs(name_list1[1], r), rest_dfs(name_list1[2], r),
-                         rest_dfs(name_list1[3], r), rest_dfs(name_list1[4], r), rest_dfs(name_list1[5], r),
-                         rest_dfs(name_list1[6], r)]
+            rest_list = [rest_dfs(name_list[0], r), rest_dfs(name_list[1], r), rest_dfs(name_list[2], r),
+                         rest_dfs(name_list[3], r), rest_dfs(name_list[4], r), rest_dfs(name_list[5], r),
+                         rest_dfs(name_list[6], r)]
 
 
-        for x in sortdata:
+        for x in MPS_obj_que:
             if x.pname == '眼镜':  # 对应的树根节点为r
                 time = time + 1
-                index2 = index2 + 1
+                ans_index = ans_index + 1
 
                 for y in range(7):
-                    rest_list[y] = sl_dfs(name_list1[y], x.require, r, rest_list[y], x.deadline)  # 每一次都会改变剩余物料的值
+                    rest_list[y] = sl_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)  # 每一次都会改变剩余物料的值
             elif x.pname == '镜框':  # 对应的树根节点为r.next1
                 time = time + 1
-                index2 = index2 + 1
+                ans_index = ans_index + 1
                 for y in range(1, 6):
-                    rest_list[y] = sl_dfs(name_list1[y], x.require, r.next1, rest_list[y], x.deadline)
-    flg = 0
+                    rest_list[y] = sl_dfs(name_list[y], x.require, r.next1, rest_list[y], x.deadline)
+
 
 
 ###############################################################################################
 
 
 def clear():
-    global index
-    global index2
-    global flg
-    index=0
-    index2=0
-    flg=0
+    global MPS_que_index
+    global ans_index
+    global MPS_obj_que
+    MPS_obj_que=[]
+    MPS_que_index=0
+    ans_index=0
     global MPS_output_que
     MPS_output_que=[]
     global ans
     ans=[]
 
-######################################################################################3
+
+######################################################################################
+
 
 from fastapi import FastAPI, Form  # 导入FastAPI和Form
 from starlette.requests import Request  # 导入Request类
