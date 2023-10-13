@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ERP</title>
+    <style>
+        h1 {
+            font-size: 2em; /* 设置字体大小 */
+            color: #4CAF50; /* 设置字体颜色 */
+            text-align: center; /* 设置文本居中 */
+            padding: 20px; /* 设置内边距 */
+            border-bottom: 2px solid #4CAF50; /* 设置下边框 */
+        }        
+        h2 {
+            font-size: 1.5em; /* 设置字体大小 */
+            color: #333; /* 设置字体颜色 */
+            text-align: left; /* 设置文本居左对齐 */
+            padding: 10px; /* 设置内边距 */
+            border-bottom: 1px solid #333; /* 设置下边框 */
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            display: flex; /* 添加这一行 */
+            justify-content: space-between; /* 添加这一行 */
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        a {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #008CBA;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #007B9A;
+        }
+            table {
+        width: 100%;
+        border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {background-color: #f5f5f5;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ERP 计算系统</h1>
+        <form action="/erp/" enctype="application/x-www-form-urlencoded" method="post">
+            <label>
+                pname:<br><input type="text" name="pname" required>
+            </label>
+            <label>
+                num:<br><input type="number" name="num" required>
+            </label>
+            <label>
+                date:<br><input type="date" name="date" required>
+            </label>
+            <input type="submit" value="添加">
+        </form>
+        <h2>MPS 计划队列</h2>
+        <a href="/show">计算</a>
+        <a href="/clear">清空</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>产品</th>
+                    <th>数量</th>
+                    <th>完成日期</th>
+                    <th>任务序号</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in que %}
+                <tr>
+                    <td>{{ item[0] }}</td>
+                    <td>{{ item[1] }}</td>
+                    <td>{{ item[2] }}</td>
+                    <td>{{ item[3] }}</td>
+                    <td>{{ item[4] }}</td>
+                    <td>{{ item[5] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+                <h2>生产和采购计划</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>产品</th>
+                    <th>数量</th>
+                    <th>调配方式</th>
+                    <th>下达日期</th>
+                    <th>完成日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ans %}
+                <tr>
+                    <td>{{ item[0] }}</td>
+                    <td>{{ item[1] }}</td>
+                    <td>{{ item[2] }}</td>
+                    <td>{{ item[3] }}</td>
+                    <td>{{ item[4] }}</td>
+                    <td>{{ item[5] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+
+</body>
+</html>
