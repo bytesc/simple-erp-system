@@ -323,10 +323,17 @@ async def root(request: Request):  # 定义/clear/路由的GET请求处理函数
 
 #########################################################################################
 
+sql_x_res = connect("""SELECT bom."变量名" from bom 
+WHERE bom."变量名" IS NOT NULL and bom."变量名" != ''""")
+x_avilable=[]
+for item in sql_x_res:
+    x_avilable.append(item[0])
+
 @app.get("/func/")
 async def root(request: Request):
     return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_que})
+                                                    "func_output": func_que,
+                                                    "x_available":x_avilable})
 
 @app.post("/func/")
 async def root(request: Request,
@@ -334,19 +341,22 @@ async def root(request: Request,
     add_func_x(x)
     print(func_que)
     return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_que})
+                                                    "func_output": func_que,
+                                                    "x_available":x_avilable})
 
 @app.get("/func_show/")
 async def root(request: Request):
     show_func()
     return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_ans_que})
+                                                    "func_output": func_ans_que,
+                                                    "x_available":x_avilable})
 
 @app.get("/func_clear/")
 async def root(request: Request):
     func_clear()
     return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_que})
+                                                    "func_output": func_que,
+                                                    "x_available":x_avilable})
 
 
 if __name__ == "__main__":

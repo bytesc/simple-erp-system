@@ -100,7 +100,12 @@
 <h1>ERP 资产负债计算</h1>
  <form action="/func/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-               变量名:<br><input type="text" name="x" required>
+               变量名:<br>
+                <select name="x" required>
+                    {% for item in x_available %}
+                    <option value="{{ item }}">{{ item }}</option>
+                    {% endfor %}
+                </select>
             </label>
             <input type="submit" value="添加">
         </form>
