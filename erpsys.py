@@ -73,16 +73,16 @@ def show_result():
             FROM inventory,supply,store 
             WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
         """
-        results = connect(sql_state)
-        print(results)
+        sql_res = connect(sql_state)
+        print(sql_res)
 
-        r=results[0]
-        for it in results:
+        r=sql_res[0]
+        for it in sql_res:
             if it[0] == '' or it[0] is None:
                 r = BinaryTree(it)  # 找到根节点
 
         def tree_build(treenode):
-            for it in results:
+            for it in sql_res:
                 if it[0] == treenode.key[1]:
                     s = BinaryTree(it)
                     treenode.insert(s)
@@ -179,6 +179,9 @@ def show_result():
 ###############################################################################################
 
 
+
+
+
 def clear():
     global MPS_que_index
     global ans_index
@@ -199,8 +202,80 @@ for item in sql_res:
     if item[0]!="" and item[0] is not None:
         supply_available.append(item)
 
-######################################################################################
 
+
+#########################################################################################33
+#####################################################################
+
+func_index = 0
+func_obj_que=[]
+func_que=[]
+func_ans_que=[]
+class collect():
+    def __init__(self, name, index):
+        self.name = name
+        self.index = index
+        self.outp = [name, '=']
+
+def add_func_x(name):
+    global func_obj_que
+    global func_index
+    if name != '':
+        for it in func_obj_que:
+            it.outp = [it.name, '=']
+        func_obj_que.append(collect(name, func_index))
+        func_que.append(name)
+        func_index += 1
+
+
+def show_func():
+    global func_ans_que
+    func_ans_que=[]
+    global func_index
+    global func_obj_que
+    bom = connect("select * from bom")
+
+    for x in func_obj_que:
+        flag_x_exist = 0
+        """先寻找对应的序号"""
+        for y in bom:
+            if y[4] == x.name:
+                num = y[0]
+                flag_x_exist = 1
+        if flag_x_exist == 0:
+            x.outp.clear()
+            x.outp.append("未找到对应的变量")
+            continue
+
+        # 再拼接对应变量
+        flag_x_source = 0
+        for y in bom:
+            if y[3] == num:
+                flag_x_source = 1
+                if flag_x_exist == 0:
+                    x.outp.append('+')
+                x.outp.append(y[4])
+                print(y[3], num, x.outp)
+                flag_x_exist = 0
+        if flag_x_source == 0:
+            x.outp = ["未找到资产流入来源"]
+    for x in func_obj_que:
+        s = ''.join(x.outp)
+        func_ans_que.append(x.name+"  "+s)
+
+
+def func_clear():
+    global func_index
+    global func_obj_que
+    global func_que
+    global func_ans_que
+    func_index = 0
+    func_obj_que = []
+    func_que = []
+    func_ans_que = []
+
+
+##############################################################################################33
 
 from fastapi import FastAPI, Form  # 导入FastAPI和Form
 from starlette.requests import Request  # 导入Request类
@@ -220,7 +295,7 @@ async def root(request: Request):  # 定义根路由处理函数，接受Request
 
 
 @app.post("/erp/")
-async def root_post(request: Request,
+async def root(request: Request,
                     pname: str = Form("default"),
                     num: str = Form("0"),
                     date: str = Form("2002-11-13")):  # 定义根路由下的POST请求处理函数，接受Request对象和表单数据作为参数
@@ -232,19 +307,46 @@ async def root_post(request: Request,
 
 
 @app.get("/show/")
-async def root_post(request: Request):  # 定义/show/路由的GET请求处理函数，接受Request对象作为参数
-    show_result()  # 调用show函数
+async def root(request: Request):  # 定义/show/路由的GET请求处理函数，接受Request对象作为参数
+    show_result()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
-
 @app.get("/clear/")
-async def root_post(request: Request):  # 定义/clear/路由的GET请求处理函数，接受Request对象作为参数
+async def root(request: Request):  # 定义/clear/路由的GET请求处理函数，接受Request对象作为参数
     clear()  # 调用clear函数
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
+
+
+#########################################################################################
+
+@app.get("/func/")
+async def root(request: Request):
+    return templates.TemplateResponse("func.html", {"request": request,
+                                                    "func_output": func_que})
+
+@app.post("/func/")
+async def root(request: Request,
+            x=Form("")):
+    add_func_x(x)
+    print(func_que)
+    return templates.TemplateResponse("func.html", {"request": request,
+                                                    "func_output": func_que})
+
+@app.get("/func_show/")
+async def root(request: Request):
+    show_func()
+    return templates.TemplateResponse("func.html", {"request": request,
+                                                    "func_output": func_ans_que})
+
+@app.get("/func_clear/")
+async def root(request: Request):
+    func_clear()
+    return templates.TemplateResponse("func.html", {"request": request,
+                                                    "func_output": func_que})
 
 
 if __name__ == "__main__":

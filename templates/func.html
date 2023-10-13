@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>ERP</title>
-    <style>
+</head>
+ <style>
         h1 {
             font-size: 2em; /* 设置字体大小 */
             color: #4CAF50; /* 设置字体颜色 */
             text-align: center; /* 设置文本居中 */
             padding: 20px; /* 设置内边距 */
             border-bottom: 2px solid #4CAF50; /* 设置下边框 */
-        }        
+        }
         h2 {
             font-size: 1.5em; /* 设置字体大小 */
             color: #333; /* 设置字体颜色 */
@@ -91,81 +92,35 @@
         }
         tr:hover {background-color: #f5f5f5;}
     </style>
-</head>
 <body>
-    <div class="container">
-        <a href="/" style="background-color: gray">物料计算</a>
-        <a href="/func">资产管理</a>
-        <h1>ERP 物料管理计算</h1>
-        <form action="/erp/" enctype="application/x-www-form-urlencoded" method="post">
+
+<div class="container">
+    <a href="/">物料计算</a>
+        <a href="/func"  style="background-color: gray">资产管理</a>
+<h1>ERP 资产负债计算</h1>
+ <form action="/func/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-                pname:<br>
-                <select name="pname" required>
-                    {% for item in supply_available %}
-                    <option value="{{ item[0] }}">{{ item[0] }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>
-                num:<br><input type="number" name="num" required>
-            </label>
-            <label>
-                date:<br><input type="date" name="date" required>
+               变量名:<br><input type="text" name="x" required>
             </label>
             <input type="submit" value="添加">
         </form>
-        <h2>MPS 计划队列</h2>
-        <a href="/show">计算</a>
-        <a href="/clear">清空</a>
+        <h2>公式列表</h2>
+        <a href="/func_show/">计算</a>
+        <a href="/func_clear/">清空</a>
         <table>
             <thead>
                 <tr>
-                    <th>产品</th>
-                    <th>数量</th>
-                    <th>完成日期</th>
-                    <th>任务序号</th>
+                    <th>公式</th>
                 </tr>
             </thead>
             <tbody>
-                {% for item in que %}
+                {% for item in func_output %}
                 <tr>
-                    <td>{{ item[0] }}</td>
-                    <td>{{ item[1] }}</td>
-                    <td>{{ item[2] }}</td>
-                    <td>{{ item[3] }}</td>
-                    <td>{{ item[4] }}</td>
-                    <td>{{ item[5] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-                <h2>生产和采购计划</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>产品</th>
-                    <th>数量</th>
-                    <th>调配方式</th>
-                    <th>下达日期</th>
-                    <th>完成日期</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in ans %}
-                <tr>
-                    <td>{{ item[0] }}</td>
-                    <td>{{ item[1] }}</td>
-                    <td>{{ item[2] }}</td>
-                    <td>{{ item[3] }}</td>
-                    <td>{{ item[4] }}</td>
-                    <td>{{ item[5] }}</td>
+                    <td>{{ item }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
-
-
 </body>
 </html>
