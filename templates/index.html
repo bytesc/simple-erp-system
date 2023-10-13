@@ -46,6 +46,12 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
+        select{
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
         input[type="submit"] {
             background-color: #4CAF50;
             color: white;
@@ -91,7 +97,12 @@
         <h1>ERP 计算系统</h1>
         <form action="/erp/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-                pname:<br><input type="text" name="pname" required>
+                pname:<br>
+                <select name="pname" required>
+                    {% for item in supply_available %}
+                    <option value="{{ item[0] }}">{{ item[0] }}</option>
+                    {% endfor %}
+                </select>
             </label>
             <label>
                 num:<br><input type="number" name="num" required>

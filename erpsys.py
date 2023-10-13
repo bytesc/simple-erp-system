@@ -1,6 +1,5 @@
 import datetime
 import math
-import operator
 
 
 class MpsObj:
@@ -9,10 +8,6 @@ class MpsObj:
         self.require = require
         self.deadline = deadline
         self.index = index
-        if pname == "眼镜":
-            self.mark = deadline - datetime.timedelta(days=1)
-        elif pname == "镜框":
-            self.mark = deadline
 
 
 ans = []
@@ -41,7 +36,7 @@ def add(pname, require, deadline):
         MPS_obj_que.sort(key=lambda item: item.deadline)
 
 
-time = 0  # 用来记录第几次录入的计划，并且第一次的计划才会用到数据库的库存值
+time = 0
 rest_list = [0]
 
 
@@ -80,7 +75,8 @@ def show_result():
         """
         results = connect(sql_state)
         print(results)
-        """树建立"""
+
+        r=results[0]
         for it in results:
             if it[0] == '' or it[0] is None:
                 r = BinaryTree(it)  # 找到根节点
@@ -95,7 +91,6 @@ def show_result():
 
         r = tree_build(r)
 
-        """深度遍历"""
 
         def sl_dfs(aim, number, treenode, rest, end_time):
             global ans_index
@@ -165,17 +160,17 @@ def show_result():
                          rest_dfs(name_list[3], r), rest_dfs(name_list[4], r), rest_dfs(name_list[5], r),
                          rest_dfs(name_list[6], r)]
 
-
         for x in MPS_obj_que:
             if x.pname == '眼镜':  # 对应的树根节点为r
                 time = time + 1
                 ans_index = ans_index + 1
 
                 for y in range(7):
-                    rest_list[y] = sl_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)  # 每一次都会改变剩余物料的值
+                    rest_list[y] = sl_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)
             elif x.pname == '镜框':  # 对应的树根节点为r.next1
                 time = time + 1
                 ans_index = ans_index + 1
+
                 for y in range(1, 6):
                     rest_list[y] = sl_dfs(name_list[y], x.require, r.next1, rest_list[y], x.deadline)
 
@@ -188,14 +183,21 @@ def clear():
     global MPS_que_index
     global ans_index
     global MPS_obj_que
-    MPS_obj_que=[]
     MPS_que_index=0
     ans_index=0
     global MPS_output_que
     MPS_output_que=[]
+    MPS_obj_que = []
     global ans
     ans=[]
 
+
+from connectdb import connect
+supply_available=[]
+sql_res = connect('select DISTINCT inventory."父物料名称" from inventory')
+for item in sql_res:
+    if item[0]!="" and item[0] is not None:
+        supply_available.append(item)
 
 ######################################################################################
 
@@ -212,7 +214,9 @@ templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实�
 
 @app.get("/")
 async def root(request: Request):  # 定义根路由处理函数，接受Request对象作为参数
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans, "que": MPS_output_que})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
+                                                     "que": MPS_output_que,
+                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
 @app.post("/erp/")
@@ -222,19 +226,25 @@ async def root_post(request: Request,
                     date: str = Form("2002-11-13")):  # 定义根路由下的POST请求处理函数，接受Request对象和表单数据作为参数
     print(pname, num, date)  # 打印表单数据
     add(pname, int(num), date)  # 调用add函数处理表单数据
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,"que": MPS_output_que})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
+                                                     "que": MPS_output_que,
+                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
 @app.get("/show/")
 async def root_post(request: Request):  # 定义/show/路由的GET请求处理函数，接受Request对象作为参数
     show_result()  # 调用show函数
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,"que": MPS_output_que})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
+                                                     "que": MPS_output_que,
+                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
 @app.get("/clear/")
 async def root_post(request: Request):  # 定义/clear/路由的GET请求处理函数，接受Request对象作为参数
     clear()  # 调用clear函数
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans, "que": MPS_output_que})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
+                                                     "que": MPS_output_que,
+                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
 if __name__ == "__main__":
