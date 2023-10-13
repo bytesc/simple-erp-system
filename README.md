@@ -1,39 +1,90 @@
-# erp-system
+# simple-erp-system
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+基于 Python, FastAPI, sqlite3 的简单 ERP 计算系统：实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
 
-#### 软件架构
-软件架构说明
+[个人网站：www.bytesc.top](http://www.bytesc.top)
 
+[个人博客：blog.bytesc.top](http://blog.bytesc.top)
 
-#### 安装教程
+## 功能介绍
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+- 根据 MPS(Master Production Schedule) 按时间分段计划企业应生产的最终产品的数量和交货期
+- 实现资产负债表公式查询
+- 注释详细，易复现
+- 极简的项目架构
+- 极简的页面布局，轻量化的前端代码
 
-#### 使用说明
+## 基本原理
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+- 通过读取数据库中的物料的子父关系表，建立物料合成树
+- 按照 MPS 队列和物料库存数量，计算生产和采购计划
 
-#### 参与贡献
+## 功能展示
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+添加 MPS 记录
+![](./readme_img/img1.png)
+产品名称从数据库中获取，用户可选择
+![](./readme_img/img2.png)
+点击计算，可一次性计算多条计划，按照时间优先级分配库存
+![](./readme_img/img3.png)
+资产负债公式变量同意从数据库中获取
+![](./readme_img/img4.png)
+可以一输出计算多个变量的公式
+![](./readme_img/img5.png)
 
+## 项目运行
 
-#### 特技
+安装依赖
+```bash
+pip install -r requirements.txt
+```
+运行
+```
+python erpsys.py
+```
+浏览器访问 [http://127.0.0.1:8080](http://127.0.0.1:8080)即可进入系统
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+如果8080端口被占用，修改`erpsys.py`文件末尾的端口配置 (port) 即可。
+```python
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8081) 
+```
+
+## 项目结构
+
+```txt
+│  connectdb.py
+│  erpdata.db
+│  erpsys.py
+│  LICENSE
+│  README.md
+│  requirements.txt
+├─templates
+│      func.html
+│      index.html
+├─readme_img
+├─sql
+       structure_data.sql
+       structure_only.sql
+```
+
+- `connectdb.py` 是最主要的源代码文件，包含服务端代码和核心算法，也是项目的运行入口
+- `erpsys.py` 包含数据库配置，连接，查询程序
+- `erpdata.db` sqlite3 数据库文件
+- `templates` 文件夹存放待渲染的 html 模板文件
+- `sql` 文件夹存放创建数据库的 sql 代码
+
+# 开源许可证
+
+此翻译版本仅供参考，以 LICENSE 文件中的英文版本为准
+
+MIT 开源许可证：
+
+版权所有 (c) 2023 bytesc
+
+特此授权，免费向任何获得本软件及相关文档文件（以下简称“软件”）副本的人提供使用、复制、修改、合并、出版、发行、再许可和/或销售软件的权利，但须遵守以下条件：
+
+上述版权声明和本许可声明应包含在所有副本或实质性部分中。
+
+本软件按“原样”提供，不作任何明示或暗示的保证，包括但不限于适销性、特定用途适用性和非侵权性。在任何情况下，作者或版权持有人均不对因使用本软件而产生的任何索赔、损害或其他责任负责，无论是在合同、侵权或其他方面。
