@@ -195,15 +195,6 @@ def clear():
     ans=[]
 
 
-from connectdb import connect
-supply_available=[]
-sql_res = connect('select DISTINCT inventory."父物料名称" from inventory')
-for item in sql_res:
-    if item[0]!="" and item[0] is not None:
-        supply_available.append(item)
-
-
-
 #########################################################################################33
 #####################################################################
 
@@ -286,6 +277,12 @@ from starlette.templating import Jinja2Templates  # 导入Jinja2Templates类
 app = FastAPI()  # 创建FastAPI应用实例
 templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实例，并指定模板目录为"templates"
 
+from connectdb import connect
+supply_available=[]
+sql_res = connect('select DISTINCT inventory."父物料名称" from inventory')
+for item in sql_res:
+    if item[0]!="" and item[0] is not None:
+        supply_available.append(item)
 
 @app.get("/")
 async def root(request: Request):  # 定义根路由处理函数，接受Request对象作为参数
