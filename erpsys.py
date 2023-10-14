@@ -92,7 +92,7 @@ def show_result():
         r = tree_build(r)
 
 
-        def sl_dfs(aim, number, treenode, rest, end_time):
+        def main_dfs(aim, number, treenode, rest, end_time):
             global ans_index
             if treenode.key[1] == aim:
                 if number > rest:
@@ -114,28 +114,28 @@ def show_result():
                  return rest
             else:
                 number1 = math.ceil(number * treenode.next1.key[3] / (1 - treenode.next1.key[4]))
-                rest = sl_dfs(aim, number1, treenode.next1, rest, end_time)
+                rest = main_dfs(aim, number1, treenode.next1, rest, end_time)
 
                 if treenode.next2 == None:
                     return rest
                 else:
                     number2 = math.ceil(number * treenode.next2.key[3] / (1 - treenode.next2.key[4]))
 
-                    rest = sl_dfs(aim, number2, treenode.next2, rest, end_time)
+                    rest = main_dfs(aim, number2, treenode.next2, rest, end_time)
 
                     if treenode.next3 == None:
                         return rest
                     else:
                         number3 = math.ceil(number * treenode.next3.key[3] / (1 - treenode.next3.key[4]))
 
-                        rest = sl_dfs(aim, number3, treenode.next3, rest, end_time)
+                        rest = main_dfs(aim, number3, treenode.next3, rest, end_time)
 
                         if treenode.next4 == None:
                             return rest
                         else:
                             number4 = math.ceil(number * treenode.next4.key[3] / (1 - treenode.next4.key[4]))
 
-                            rest = sl_dfs(aim, number4, treenode.next4, rest, end_time)
+                            rest = main_dfs(aim, number4, treenode.next4, rest, end_time)
             return rest
 
         name_list=[]
@@ -167,13 +167,13 @@ def show_result():
                 ans_index = ans_index + 1
 
                 for y in range(7):
-                    rest_list[y] = sl_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)
+                    rest_list[y] = main_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)
             elif x.pname == '镜框':  # 对应的树根节点为r.next1
                 time = time + 1
                 ans_index = ans_index + 1
 
                 for y in range(1, 6):
-                    rest_list[y] = sl_dfs(name_list[y], x.require, r.next1, rest_list[y], x.deadline)
+                    rest_list[y] = main_dfs(name_list[y], x.require, r.next1, rest_list[y], x.deadline)
 
 
 
