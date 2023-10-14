@@ -1,10 +1,14 @@
 # simple-erp-system
 
-基于 Python, FastAPI, sqlite3 的简单 ERP 计算系统：实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
+✨ **基于 Python, FastAPI, sqlite3 的简单 ERP 计算系统**：实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
 
 [个人网站：www.bytesc.top](http://www.bytesc.top)
 
 [个人博客：blog.bytesc.top](http://blog.bytesc.top)
+
+🔔 如有项目相关问题，欢迎在本项目提出`issue`，我一般会在 24 小时内回复。
+
+对本仓库内的全部实质性内容（包括但不限于数据，图片，文档）保留著作权，请遵守`LICENSE`文件中的开源协议（参考翻译见本文档末尾）。
 
 ## 功能介绍
 
@@ -16,8 +20,11 @@
 
 ## 基本原理
 
-- 通过读取数据库中的物料的子父关系表，建立物料合成树
-- 按照 MPS 队列和物料库存数量，计算生产和采购计划
+🚩 系统架构：
+![](./readme_img/img0.png)
+- 通过读取数据库中的物料的子父关系表，建立物料合成关系树
+- 按照 MPS 队列和物料库存数量，DFS(Deep First Search)深度优先搜索计算生产和采购计划。
+
 
 ## 功能展示
 
@@ -31,6 +38,25 @@
 ![](./readme_img/img4.png)
 可以一输出计算多个变量的公式
 ![](./readme_img/img5.png)
+
+## 数据库结构
+
+`erpdata.db` 为 sqlite3 数据文件，`sql` 文件夹下包含数据库备份sql代码。
+
+数据库结构
+![](./readme_img/img6.png)
+`supply`物料信息表
+![](./readme_img/img7.png)
+![](./readme_img/img8.png)
+`inventory`物料构成清单
+![](./readme_img/img9.png)
+![](./readme_img/img10.png)
+`store`库存表
+![](./readme_img/img11.png)
+![](./readme_img/img12.png)
+`bom`资产负债信息表
+![](./readme_img/img13.png)
+![](./readme_img/img14.png)
 
 ## 项目运行
 
@@ -74,6 +100,13 @@ if __name__ == "__main__":
 - `erpdata.db` sqlite3 数据库文件
 - `templates` 文件夹存放待渲染的 html 模板文件
 - `sql` 文件夹存放创建数据库的 sql 代码
+
+## 有待完善的部分
+
+- 算法的通用性：相关 DPS 算法的实现在提供的数据集上可以完成业务功能，但可能不适用于所有类型和结构的其它数据集，算法的通用性有待完善。
+- 安全性：访问控制尚不完善。
+- 健壮性：异常处理机制尚不完善。
+- 多用户：目前多用户共享数据区，不能独立计算。
 
 # 开源许可证
 
