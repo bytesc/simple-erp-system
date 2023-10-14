@@ -100,8 +100,8 @@ if __name__ == "__main__":
        structure_only.sql
 ```
 
-- `connectdb.py` 是最主要的源代码文件，包含服务端代码和核心算法，也是项目的运行入口
-- `erpsys.py` 包含数据库配置，连接，查询程序
+- `erpsys.py` 是最主要的源代码文件，包含服务端代码和核心算法，也是项目的运行入口
+- `connectdb.py` 包含数据库配置，连接，查询程序
 - `erpdata.db` sqlite3 数据库文件
 - `templates` 文件夹存放待渲染的 html 模板文件
 - `sql` 文件夹存放创建数据库的 sql 代码
