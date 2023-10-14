@@ -22,9 +22,12 @@
 
 🚩 系统架构：
 ![](./readme_img/img0.png)
+
+🚩 算法流程
+![](./readme_img/imga.png)
+
 - 通过读取数据库中的物料的子父关系表，建立物料合成关系树
 - 按照 MPS 队列和物料库存数量，DFS(Deep First Search)深度优先搜索计算生产和采购计划。
-
 
 ## 功能展示
 
