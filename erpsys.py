@@ -105,6 +105,7 @@ def show_result():
 
                 ans_index += 1
                 ans.append([treenode.key[1], treenode.need, treenode.key[2], start_time, end_time])
+                ans.sort(key=lambda x: x[4])
 
             """开始日期=下一级项目的结束日期"""
             end_time = end_time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
