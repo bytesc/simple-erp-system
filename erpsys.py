@@ -90,8 +90,23 @@ def show_result():
                 if mps.pname == item[1]:
                     main_dfs(item, mps.require, ans, mps.deadline)
 
-def refresh_db():
-    pass
+        refresh_db(compose)
+
+
+def refresh_db(compose):
+    from connectdb import exec_sql
+    for item in compose:
+        sql_statement = """UPDATE store SET"""
+        sql_statement += " 工序库存=" + str(item[5])
+        sql_statement += " where 物料名称='" + str(item[1])+"'"
+        print(sql_statement)
+        exec_sql(sql_statement)
+        sql_statement = """UPDATE store SET"""
+        sql_statement += " 资材库存=" + str(item[6])
+        sql_statement += " where 物料名称='" + str(item[1])+"'"
+        print(sql_statement)
+        exec_sql(sql_statement)
+    return
 
 ###############################################################################################
 
