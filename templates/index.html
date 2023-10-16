@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <title>ERP</title>
@@ -96,10 +96,11 @@
     <div class="container">
         <a href="/" style="background-color: gray">物料计算</a>
         <a href="/func">资产管理</a>
+        <a href="/store" >库存管理</a>
         <h1>ERP 物料管理计算</h1>
         <form action="/erp/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-                pname:<br>
+                物料：<br>
                 <select name="pname" required>
                     {% for item in supply_available %}
                     <option value="{{ item[0] }}">{{ item[0] }}</option>
@@ -107,10 +108,10 @@
                 </select>
             </label>
             <label>
-                num:<br><input type="number" name="num" required>
+                数量：<br><input type="number" name="num" required oninput="value=value.replace('-', '')">
             </label>
             <label>
-                date:<br><input type="date" name="date" required>
+                完成日期：<br><input type="date" name="date" required>
             </label>
             <input type="submit" value="添加">
         </form>

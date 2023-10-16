@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>ERP</title>
-</head>
- <style>
+    <style>
         h1 {
             font-size: 2em; /* 设置字体大小 */
             color: #4CAF50; /* 设置字体颜色 */
             text-align: center; /* 设置文本居中 */
             padding: 20px; /* 设置内边距 */
             border-bottom: 2px solid #4CAF50; /* 设置下边框 */
-        }
+        }        
         h2 {
             font-size: 1.5em; /* 设置字体大小 */
             color: #333; /* 设置字体颜色 */
@@ -32,7 +31,9 @@
         }
         form {
             background-color: #fff;
-            padding: 20px;
+            padding-top: 10px;
+            padding-left: 20px;
+            padding-right: 20px;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
@@ -92,41 +93,53 @@
         }
         tr:hover {background-color: #f5f5f5;}
     </style>
+</head>
 <body>
-
-<div class="container">
-    <a href="/">物料计算</a>
-        <a href="/func"  style="background-color: gray">资产管理</a>
-    <a href="/store" >库存管理</a>
-<h1>ERP 资产负债计算</h1>
- <form action="/func/" enctype="application/x-www-form-urlencoded" method="post">
+    <div class="container">
+        <a href="/" >物料计算</a>
+        <a href="/func">资产管理</a>
+        <a href="/store" style="background-color: gray">库存管理</a>
+        <h1>ERP 库存</h1>
+        <h2>物料库存</h2>
+        {% for item in store %}
+        <form action="/store/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-               变量名:<br>
-                <select name="x" required>
-                    {% for item in x_available %}
-                    <option value="{{ item }}">{{ item }}</option>
-                    {% endfor %}
+                物料：
+                <select name="pname" required>
+                    <option value="{{ item[0] }}">{{ item[0] }}</option>
                 </select>
             </label>
-            <input type="submit" value="添加">
+            <label>
+                工序库存：<input type="number" name="num1" required value="{{ item[1] }}" oninput="value=value.replace('-', '')">
+            </label>
+            <label>
+                资材库存：<input type="number" name="num2" required value="{{ item[2] }}" oninput="value=value.replace('-', '')">
+            </label>
+            <input type="submit" value="修改">
         </form>
-        <h2>公式列表</h2>
-        <a href="/func_show/">计算</a>
-        <a href="/func_clear/">清空</a>
-        <table>
-            <thead>
-                <tr>
-                    <th>公式</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in func_output %}
-                <tr>
-                    <td>{{ item }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% endfor %}
+<!--        <table>-->
+<!--            <thead>-->
+<!--                <tr>-->
+<!--                    <th>产品</th>-->
+<!--                    <th>工序库存</th>-->
+<!--                    <th>资材库存</th>-->
+<!--                </tr>-->
+<!--            </thead>-->
+<!--            <tbody>-->
+<!--                {% for item in store %}-->
+<!--                <tr>-->
+<!--                    <td>{{ item[0] }}</td>-->
+<!--                    <td>{{ item[1] }}</td>-->
+<!--                    <td>{{ item[2] }}</td>-->
+<!--                </tr>-->
+<!--                {% endfor %}-->
+<!--            </tbody>-->
+<!--        </table>-->
+
     </div>
+
+
+
 </body>
 </html>

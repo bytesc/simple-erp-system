@@ -65,6 +65,7 @@ async def show_result():
                 start_time = end_time - datetime.timedelta(days=item[7])
                 ans.append([item[1], 0, item[2], start_time, end_time])
                 refresh_store(item, need_num, 0)
+                return
             else:  # 工序不够，资材库存够用
                 start_time = end_time - datetime.timedelta(days=item[7] + item[8])
                 ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
@@ -212,7 +213,7 @@ templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实�
 async def get_supply_available():
     supply_available = []
     from connectdb import select_from_db
-    sql_res = await select_from_db('select DISTINCT inventory."父物料名称" from inventory')
+    sql_res = await select_from_db("""select DISTINCT inventory."父物料名称" from inventory""")
     for item in sql_res:
         if item[0] != "" and item[0] is not None:
             supply_available.append(item)
@@ -299,8 +300,28 @@ async def root(request: Request):
     x_available = await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_que,
-                                                    "x_available":x_available})
+                                                    "x_available": x_available})
 
+
+@app.get("/store/")
+async def root(request: Request):
+    from connectdb import select_from_db
+    store_list = await select_from_db("""select * from store""")
+    return templates.TemplateResponse("store.html", {"request": request,
+                                                    "store": store_list})
+
+@app.post("/store/")
+async def root(request: Request,
+               pname: str = Form("default"),
+               num1: str = Form("0"),
+               num2: str = Form("0")):
+    sql_statement = """update store set 工序库存={num1:d}, 资材库存={num2:d} 
+    where 物料名称='{pname:s}'""".format(pname=pname,num1=int(num1),num2=int(num2))
+    from connectdb import select_from_db,exec_sql
+    await exec_sql(sql_statement)
+    store_list = await select_from_db("""select * from store""")
+    return templates.TemplateResponse("store.html", {"request": request,
+                                                    "store": store_list})
 
 if __name__ == "__main__":
     import uvicorn
