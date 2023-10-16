@@ -82,9 +82,9 @@ def show_result():
                 r = BinaryTree(it)  # 找到根节点
 
         def tree_build(treenode):
-            for it in sql_res:
-                if it[0] == treenode.key[1]:
-                    s = BinaryTree(it)
+            for item in sql_res:
+                if item[0] == treenode.key[1]:
+                    s = BinaryTree(item)
                     treenode.insert(s)
                     tree_build(s)
             return treenode
