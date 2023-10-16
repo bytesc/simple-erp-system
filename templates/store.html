@@ -37,6 +37,7 @@
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
+            border-bottom: 1px solid #ddd;
         }
         label {
             display: block;
@@ -48,17 +49,11 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        select{
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
         input[type="submit"] {
             background-color: #4CAF50;
             color: white;
             padding: 14px 20px;
-            margin: 10px 0;
+            margin: 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -78,20 +73,7 @@
         a:hover {
             background-color: #007B9A;
         }
-            table {
-        width: 100%;
-        border-collapse: collapse;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        tr:hover {background-color: #f5f5f5;}
+        form:hover {background-color: #f5f5f5;}
     </style>
 </head>
 <body>
@@ -104,39 +86,19 @@
         {% for item in store %}
         <form action="/store/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
-                物料：
-                <select name="pname" required>
-                    <option value="{{ item[0] }}">{{ item[0] }}</option>
-                </select>
+                物料：<input type="text" name="pname" required value="{{ item[0] }}" readonly>
             </label>
             <label>
-                工序库存：<input type="number" name="num1" required value="{{ item[1] }}" oninput="value=value.replace('-', '')">
+                工序库存：<input type="number" name="num1" required value="{{ item[1] }}"
+                                oninput="value=value.replace('-', '');value=value.replace('.', '')">
             </label>
             <label>
-                资材库存：<input type="number" name="num2" required value="{{ item[2] }}" oninput="value=value.replace('-', '')">
+                资材库存：<input type="number" name="num2" required value="{{ item[2] }}"
+                                oninput="value=value.replace('-', '');value=value.replace('.', '')">
             </label>
             <input type="submit" value="修改">
         </form>
         {% endfor %}
-<!--        <table>-->
-<!--            <thead>-->
-<!--                <tr>-->
-<!--                    <th>产品</th>-->
-<!--                    <th>工序库存</th>-->
-<!--                    <th>资材库存</th>-->
-<!--                </tr>-->
-<!--            </thead>-->
-<!--            <tbody>-->
-<!--                {% for item in store %}-->
-<!--                <tr>-->
-<!--                    <td>{{ item[0] }}</td>-->
-<!--                    <td>{{ item[1] }}</td>-->
-<!--                    <td>{{ item[2] }}</td>-->
-<!--                </tr>-->
-<!--                {% endfor %}-->
-<!--            </tbody>-->
-<!--        </table>-->
-
     </div>
 
 

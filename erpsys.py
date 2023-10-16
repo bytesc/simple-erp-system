@@ -1,5 +1,6 @@
 import datetime
 import math
+import threading
 
 
 class MpsObj:
@@ -32,9 +33,9 @@ async def add(pname, require, deadline):
 
         MPS_obj_que.sort(key=lambda item: item.deadline)
 
-
+mutex = threading.Lock()  # 只允许一个修改库存
 async def show_result():
-
+    mutex.acquire()
     global ans
     sql_state="""
             SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
@@ -97,6 +98,7 @@ async def show_result():
                 main_dfs(item, mps.require, ans, mps.deadline)
 
     await refresh_db(compose)
+    mutex.release()
 
 
 async def refresh_db(compose):
@@ -261,6 +263,32 @@ async def root(request: Request):  # 定义/clear/路由的GET请求处理函数
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
+#########################################################################
+
+
+@app.get("/store/")
+async def root(request: Request):
+    from connectdb import select_from_db
+    store_list = await select_from_db("""select * from store""")
+    return templates.TemplateResponse("store.html", {"request": request,
+                                                    "store": store_list})
+
+
+@app.post("/store/")
+async def root(request: Request,
+               pname: str = Form("default"),
+               num1: str = Form("0"),
+               num2: str = Form("0")):
+    sql_statement = """update store set 工序库存={num1:d}, 资材库存={num2:d} 
+    where 物料名称='{pname:s}'""".format(pname=pname,num1=int(num1),num2=int(num2))
+    from connectdb import select_from_db,exec_sql
+    mutex.acquire()
+    await exec_sql(sql_statement)
+    mutex.release()
+    store_list = await select_from_db("""select * from store""")
+    return templates.TemplateResponse("store.html", {"request": request,
+                                                    "store": store_list})
+
 
 #########################################################################################
 
@@ -308,25 +336,6 @@ async def root(request: Request):
                                                     "x_available": x_available})
 
 
-@app.get("/store/")
-async def root(request: Request):
-    from connectdb import select_from_db
-    store_list = await select_from_db("""select * from store""")
-    return templates.TemplateResponse("store.html", {"request": request,
-                                                    "store": store_list})
-
-@app.post("/store/")
-async def root(request: Request,
-               pname: str = Form("default"),
-               num1: str = Form("0"),
-               num2: str = Form("0")):
-    sql_statement = """update store set 工序库存={num1:d}, 资材库存={num2:d} 
-    where 物料名称='{pname:s}'""".format(pname=pname,num1=int(num1),num2=int(num2))
-    from connectdb import select_from_db,exec_sql
-    await exec_sql(sql_statement)
-    store_list = await select_from_db("""select * from store""")
-    return templates.TemplateResponse("store.html", {"request": request,
-                                                    "store": store_list})
 
 if __name__ == "__main__":
     import uvicorn
