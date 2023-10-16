@@ -1,6 +1,7 @@
 import datetime
 import math
 
+from connectdb import select_from_db_init,select_from_db,exec_sql
 
 class MpsObj:
     def __init__(self, pname, require, deadline, index):
@@ -17,7 +18,7 @@ MPS_obj_que = []
 MPS_que_index = 0
 
 
-def add(pname, require, deadline):
+async def add(pname, require, deadline):
     global time
     global MPS_obj_que
     global MPS_que_index
@@ -33,10 +34,9 @@ def add(pname, require, deadline):
         MPS_obj_que.sort(key=lambda item: item.deadline)
 
 
-def show_result():
+async def show_result():
 
         global ans
-        from connectdb import select_from_db
         sql_state="""
             SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
             supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
@@ -44,7 +44,7 @@ def show_result():
             FROM inventory,supply,store 
             WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
         """
-        sql_res = select_from_db(sql_state)
+        sql_res = await select_from_db(sql_state)
         print(sql_res)
 
         compose = []
@@ -90,29 +90,28 @@ def show_result():
                 if mps.pname == item[1]:
                     main_dfs(item, mps.require, ans, mps.deadline)
 
-        refresh_db(compose)
+        await refresh_db(compose)
 
 
-def refresh_db(compose):
+async def refresh_db(compose):
     from connectdb import exec_sql
     for item in compose:
         sql_statement = """UPDATE store SET"""
         sql_statement += " 工序库存=" + str(item[5])
         sql_statement += " where 物料名称='" + str(item[1])+"'"
-        print(sql_statement)
-        exec_sql(sql_statement)
+        # print(sql_statement)
+        await exec_sql(sql_statement)
         sql_statement = """UPDATE store SET"""
         sql_statement += " 资材库存=" + str(item[6])
         sql_statement += " where 物料名称='" + str(item[1])+"'"
-        print(sql_statement)
-        exec_sql(sql_statement)
+        # print(sql_statement)
+        await exec_sql(sql_statement)
     return
 
 ###############################################################################################
 
 
-
-def clear():
+async def clear():
     global MPS_que_index
     global MPS_obj_que
     global MPS_output_que
@@ -130,13 +129,16 @@ func_index = 0
 func_obj_que=[]
 func_que=[]
 func_ans_que=[]
+
+
 class collect():
     def __init__(self, name, index):
         self.name = name
         self.index = index
         self.outp = [name, '=']
 
-def add_func_x(name):
+
+async def add_func_x(name):
     global func_obj_que
     global func_index
     if name != '':
@@ -147,12 +149,12 @@ def add_func_x(name):
         func_index += 1
 
 
-def show_func():
+async def show_func():
     global func_ans_que
     func_ans_que=[]
     global func_index
     global func_obj_que
-    bom = select_from_db("select * from bom")
+    bom = await select_from_db("select * from bom")
 
     for x in func_obj_que:
         flag_x_exist = 0
@@ -183,7 +185,7 @@ def show_func():
         func_ans_que.append(x.name+"  "+s)
 
 
-def func_clear():
+async def func_clear():
     global func_index
     global func_obj_que
     global func_que
@@ -205,15 +207,18 @@ from starlette.templating import Jinja2Templates  # 导入Jinja2Templates类
 app = FastAPI()  # 创建FastAPI应用实例
 templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实例，并指定模板目录为"templates"
 
-from connectdb import select_from_db
-supply_available=[]
-sql_res = select_from_db('select DISTINCT inventory."父物料名称" from inventory')
-for item in sql_res:
-    if item[0]!="" and item[0] is not None:
-        supply_available.append(item)
+
+async def get_supply_available():
+    supply_available = []
+    sql_res = await select_from_db('select DISTINCT inventory."父物料名称" from inventory')
+    for item in sql_res:
+        if item[0] != "" and item[0] is not None:
+            supply_available.append(item)
+    return supply_available
 
 @app.get("/")
 async def root(request: Request):  # 定义根路由处理函数，接受Request对象作为参数
+    supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
@@ -224,8 +229,9 @@ async def root(request: Request,
                     pname: str = Form("default"),
                     num: str = Form("0"),
                     date: str = Form("2002-11-13")):  # 定义根路由下的POST请求处理函数，接受Request对象和表单数据作为参数
-    print(pname, num, date)  # 打印表单数据
-    add(pname, int(num), date)  # 调用add函数处理表单数据
+    # print(pname, num, date)  # 打印表单数据
+    await add(pname, int(num), date)  # 调用add函数处理表单数据
+    supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
@@ -233,14 +239,16 @@ async def root(request: Request,
 
 @app.get("/show/")
 async def root(request: Request):  # 定义/show/路由的GET请求处理函数，接受Request对象作为参数
-    show_result()
+    await show_result()
+    supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 @app.get("/clear/")
 async def root(request: Request):  # 定义/clear/路由的GET请求处理函数，接受Request对象作为参数
-    clear()  # 调用clear函数
+    await clear()  # 调用clear函数
+    supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
@@ -248,40 +256,47 @@ async def root(request: Request):  # 定义/clear/路由的GET请求处理函数
 
 #########################################################################################
 
-sql_x_res = select_from_db("""SELECT bom."变量名" from bom 
-WHERE bom."变量名" IS NOT NULL and bom."变量名" != ''""")
-x_avilable=[]
-for item in sql_x_res:
-    x_avilable.append(item[0])
+async def get_x_available():
+    sql_x_res = await select_from_db("""SELECT bom."变量名" from bom 
+    WHERE bom."变量名" IS NOT NULL and bom."变量名" != ''""")
+    x_available = []
+    for item in sql_x_res:
+        x_available.append(item[0])
+    return x_available
+
 
 @app.get("/func/")
 async def root(request: Request):
+    x_available = await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_que,
-                                                    "x_available":x_avilable})
+                                                    "x_available":x_available})
 
 @app.post("/func/")
 async def root(request: Request,
             x=Form("")):
-    add_func_x(x)
-    print(func_que)
+    await add_func_x(x)
+    # print(func_que)
+    x_available=await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_que,
-                                                    "x_available":x_avilable})
+                                                    "x_available":x_available})
 
 @app.get("/func_show/")
 async def root(request: Request):
-    show_func()
+    await show_func()
+    x_available = await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_ans_que,
-                                                    "x_available":x_avilable})
+                                                    "x_available":x_available})
 
 @app.get("/func_clear/")
 async def root(request: Request):
-    func_clear()
+    await func_clear()
+    x_available = await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_que,
-                                                    "x_available":x_avilable})
+                                                    "x_available":x_available})
 
 
 if __name__ == "__main__":
