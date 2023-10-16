@@ -36,7 +36,7 @@ def add(pname, require, deadline):
 def show_result():
 
         global ans
-        from connectdb import connect
+        from connectdb import select_from_db
         sql_state="""
             SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
             supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
@@ -44,7 +44,7 @@ def show_result():
             FROM inventory,supply,store 
             WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
         """
-        sql_res = connect(sql_state)
+        sql_res = select_from_db(sql_state)
         print(sql_res)
 
         compose = []
@@ -137,7 +137,7 @@ def show_func():
     func_ans_que=[]
     global func_index
     global func_obj_que
-    bom = connect("select * from bom")
+    bom = select_from_db("select * from bom")
 
     for x in func_obj_que:
         flag_x_exist = 0
@@ -190,9 +190,9 @@ from starlette.templating import Jinja2Templates  # 导入Jinja2Templates类
 app = FastAPI()  # 创建FastAPI应用实例
 templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实例，并指定模板目录为"templates"
 
-from connectdb import connect
+from connectdb import select_from_db
 supply_available=[]
-sql_res = connect('select DISTINCT inventory."父物料名称" from inventory')
+sql_res = select_from_db('select DISTINCT inventory."父物料名称" from inventory')
 for item in sql_res:
     if item[0]!="" and item[0] is not None:
         supply_available.append(item)
@@ -233,7 +233,7 @@ async def root(request: Request):  # 定义/clear/路由的GET请求处理函数
 
 #########################################################################################
 
-sql_x_res = connect("""SELECT bom."变量名" from bom 
+sql_x_res = select_from_db("""SELECT bom."变量名" from bom 
 WHERE bom."变量名" IS NOT NULL and bom."变量名" != ''""")
 x_avilable=[]
 for item in sql_x_res:

@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def connect(sql):
+def select_from_db(sql):
     connect = sqlite3.connect('./erpdata.db')  # Connect to the SQLite database file 'erp.db'
     cursor = connect.cursor()  # Use cursor() to get a cursor
     cursor.execute(sql)  # Execute the SQL statement
