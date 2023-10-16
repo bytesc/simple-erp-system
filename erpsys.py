@@ -177,7 +177,7 @@ async def show_func():
                 if flag_x_exist == 0:
                     x.outp.append('+')
                 x.outp.append(y[4])
-                print(y[3], num, x.outp)
+                # print(y[3], num, x.outp)
                 flag_x_exist = 0
         if flag_x_source == 0:
             x.outp = ["未找到资产流入来源"]
@@ -259,6 +259,7 @@ async def root(request: Request):  # 定义/clear/路由的GET请求处理函数
 #########################################################################################
 
 async def get_x_available():
+    from connectdb import select_from_db
     sql_x_res = await select_from_db("""SELECT bom."变量名" from bom 
     WHERE bom."变量名" IS NOT NULL and bom."变量名" != ''""")
     x_available = []
