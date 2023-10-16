@@ -1,7 +1,6 @@
 import datetime
 import math
 
-from connectdb import select_from_db_init,select_from_db,exec_sql
 
 class MpsObj:
     def __init__(self, pname, require, deadline, index):
@@ -36,61 +35,62 @@ async def add(pname, require, deadline):
 
 async def show_result():
 
-        global ans
-        sql_state="""
+    global ans
+    sql_state="""
             SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
             supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
             inventory."供应商提前期" 
             FROM inventory,supply,store 
             WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
         """
-        sql_res = await select_from_db(sql_state)
-        print(sql_res)
+    from connectdb import select_from_db
+    sql_res = await select_from_db(sql_state)
+    print(sql_res)
 
-        compose = []
-        for i in sql_res:
-            compose.append(list(i))
-        print(compose)
+    compose = []
+    for i in sql_res:
+        compose.append(list(i))
+    print(compose)
 
-        def refresh_store(item, store_1, store_2):
-            for i in compose:
-                if i[1] == item[1]:
-                    i[5] -= store_1
-                    i[6] -= store_2
+    def refresh_store(item, store_1, store_2):
+        for i in compose:
+            if i[1] == item[1]:
+                i[5] -= store_1
+                i[6] -= store_2
 
-        def main_dfs(item, need_num, ans, end_time):
-            need_num = math.ceil(need_num/(1-item[4]))  # 损耗
-            if need_num <= item[5]+item[6]:
-                if need_num <= item[5]:  # 工序够用
-                    start_time = end_time - datetime.timedelta(days=item[7])
-                    ans.append([item[1], 0, item[2], start_time, end_time])
-                    refresh_store(item, need_num, 0)
-                else:  # 工序不够，资材库存够用
-                    start_time = end_time - datetime.timedelta(days=item[7] + item[8])
-                    ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
-                    refresh_store(item, item[5], need_num - item[5])
-            else:  # 工序和资材库存都不够用
-                start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
-                ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
-                refresh_store(item, item[5], item[6])
+    def main_dfs(item, need_num, ans, end_time):
+        need_num = math.ceil(need_num/(1-item[4]))  # 损耗
+        if need_num <= item[5]+item[6]:
+            if need_num <= item[5]:  # 工序够用
+                start_time = end_time - datetime.timedelta(days=item[7])
+                ans.append([item[1], 0, item[2], start_time, end_time])
+                refresh_store(item, need_num, 0)
+            else:  # 工序不够，资材库存够用
+                start_time = end_time - datetime.timedelta(days=item[7] + item[8])
+                ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
+                refresh_store(item, item[5], need_num - item[5])
+        else:  # 工序和资材库存都不够用
+            start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
+            ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
+            refresh_store(item, item[5], item[6])
 
-            child_items=[]
-            for child in compose:
-                if child[0]==item[1]:
-                    child_items.append(child)
+        child_items=[]
+        for child in compose:
+            if child[0]==item[1]:
+                child_items.append(child)
 
-            if len(child_items)==0:
-                return
-            else:
-                for child in child_items:
-                    main_dfs(child,need_num*child[3],ans,start_time)
+        if len(child_items)==0:
+            return
+        else:
+            for child in child_items:
+                main_dfs(child,need_num*child[3],ans,start_time)
 
-        for mps in MPS_obj_que:
-            for item in compose:
-                if mps.pname == item[1]:
-                    main_dfs(item, mps.require, ans, mps.deadline)
+    for mps in MPS_obj_que:
+        for item in compose:
+            if mps.pname == item[1]:
+                main_dfs(item, mps.require, ans, mps.deadline)
 
-        await refresh_db(compose)
+    await refresh_db(compose)
 
 
 async def refresh_db(compose):
@@ -154,6 +154,7 @@ async def show_func():
     func_ans_que=[]
     global func_index
     global func_obj_que
+    from connectdb import select_from_db
     bom = await select_from_db("select * from bom")
 
     for x in func_obj_que:
@@ -210,6 +211,7 @@ templates = Jinja2Templates(directory="templates")  # 创建Jinja2Templates实�
 
 async def get_supply_available():
     supply_available = []
+    from connectdb import select_from_db
     sql_res = await select_from_db('select DISTINCT inventory."父物料名称" from inventory')
     for item in sql_res:
         if item[0] != "" and item[0] is not None:
