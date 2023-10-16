@@ -2,7 +2,7 @@
 
 ✨ **基于 Python, FastAPI, sqlite3 的简单 ERP 计算系统**：实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
 
-[个人网站：www.bytesc.top](http://www.bytesc.top)
+[个人网站：www.bytesc.top](http://www.bytesc.top) 包含项目 📌 [在线演示](http://www.bytesc.top)  📌 
 
 [个人博客：blog.bytesc.top](http://blog.bytesc.top)
 
