@@ -1,6 +1,6 @@
 # simple-erp-system
 
-✨ **基于 Python, FastAPI, sqlite3 的简单 ERP 计算系统**：实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
+✨ **基于 Python, FastAPI, sqlite3 的简单 ERP 系统**：企业资源计划系统（Enterprise Resource Planning System），实现 MPS(Master Production Schedule) 的计算，按时间分段计划企业应生产的最终产品的数量和交货期；资产负债表公式查询。
 
 [个人网站：www.bytesc.top](http://www.bytesc.top) 包含项目 📌 [在线演示](http://www.bytesc.top)  📌 
 
@@ -24,7 +24,7 @@
 
 ![](./readme_img/img0.png)
 
-🚩 算法流程：
+🚩 DPS 算法流程：
 
 ![](./readme_img/imga.png)
 
@@ -111,11 +111,6 @@ if __name__ == "__main__":
 - `templates` 文件夹存放待渲染的 html 模板文件
 - `sql` 文件夹存放创建数据库的 sql 代码
 
-## 有待完善的部分
-
-- 安全性：访问控制尚不完善。
-- 健壮性：异常处理机制尚不完善。
-- 多用户：目前多用户共享数据区，不能独立计算。
 
 # 开源许可证
 
