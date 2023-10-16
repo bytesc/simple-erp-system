@@ -12,17 +12,15 @@ class MpsObj:
 
 ans = []
 MPS_output_que = []
-MPS_obj_que = []
 
+MPS_obj_que = []
 MPS_que_index = 0
-ans_index = 0
 
 
 def add(pname, require, deadline):
     global time
     global MPS_obj_que
     global MPS_que_index
-    global ans_index
 
     if pname != '' and require != '' and deadline != '':
         time = 0
@@ -31,40 +29,13 @@ def add(pname, require, deadline):
         MPS_obj_que.append(MpsObj(pname, require, deadline, MPS_que_index))
         MPS_output_que.append([pname, require, deadline, MPS_que_index])
         MPS_que_index = MPS_que_index + 1  # 录入一次就+1
-        ans_index = MPS_que_index
 
         MPS_obj_que.sort(key=lambda item: item.deadline)
 
 
-time = 0
-rest_list = [0]
-
-
 def show_result():
-        global ans_index
-        global time
-        global rest_list
 
-        """树定义"""
-        class BinaryTree:
-            def __init__(self, rootObj):
-                self.key = list(rootObj)
-                self.need = 0
-                self.next1 = None
-                self.next2 = None
-                self.next3 = None
-                self.next4 = None
-
-            def insert(self, newNode):
-                if self.next1 == None:
-                    self.next1 = newNode
-                elif self.next2 == None:
-                    self.next2 = newNode
-                elif self.next3 == None:
-                    self.next3 = newNode
-                elif self.next4 == None:
-                    self.next4 = newNode
-
+        global ans
         from connectdb import connect
         sql_state="""
             SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
@@ -76,120 +47,61 @@ def show_result():
         sql_res = connect(sql_state)
         print(sql_res)
 
-        r=sql_res[0]
-        for it in sql_res:
-            if it[0] == '' or it[0] is None:
-                r = BinaryTree(it)  # 找到根节点
+        compose = []
+        for i in sql_res:
+            compose.append(list(i))
+        print(compose)
 
-        def tree_build(treenode):
-            for item in sql_res:
-                if item[0] == treenode.key[1]:
-                    s = BinaryTree(item)
-                    treenode.insert(s)
-                    tree_build(s)
-            return treenode
+        def refresh_store(item, store_1, store_2):
+            for i in compose:
+                if i[1] == item[1]:
+                    i[5] -= store_1
+                    i[6] -= store_2
 
-        r = tree_build(r)
+        def main_dfs(item, need_num, ans, end_time):
+            need_num = math.ceil(need_num/(1-item[4]))  # 损耗
+            if need_num <= item[5]+item[6]:
+                if need_num <= item[5]:  # 工序够用
+                    start_time = end_time - datetime.timedelta(days=item[7])
+                    ans.append([item[1], 0, item[2], start_time, end_time])
+                    refresh_store(item, need_num, 0)
+                else:  # 工序不够，资材库存够用
+                    start_time = end_time - datetime.timedelta(days=item[7] + item[8])
+                    ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
+                    refresh_store(item, item[5], need_num - item[5])
+            else:  # 工序和资材库存都不够用
+                start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
+                ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
+                refresh_store(item, item[5], item[6])
 
+            child_items=[]
+            for child in compose:
+                if child[0]==item[1]:
+                    child_items.append(child)
 
-        def main_dfs(aim, number, treenode, rest, end_time):
-            global ans_index
-            if treenode.key[1] == aim:
-                if number > rest:
-                    treenode.need = number - rest
-                    rest = 0
-                start_time = end_time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
-                if number <= rest:
-                    rest = rest - number
-                    treenode.need = 0
-
-                ans_index += 1
-                ans.append([treenode.key[1], treenode.need, treenode.key[2], start_time, end_time])
-                ans.sort(key=lambda x: x[4])
-
-            """开始日期=下一级项目的结束日期"""
-            end_time = end_time - datetime.timedelta(days=treenode.key[7] + treenode.key[8] + treenode.key[9])
-
-            if treenode.next1 == None:
-                 return rest
+            if len(child_items)==0:
+                return
             else:
-                number1 = math.ceil(number * treenode.next1.key[3] / (1 - treenode.next1.key[4]))
-                rest = main_dfs(aim, number1, treenode.next1, rest, end_time)
+                for child in child_items:
+                    main_dfs(child,need_num*child[3],ans,start_time)
 
-                if treenode.next2 == None:
-                    return rest
-                else:
-                    number2 = math.ceil(number * treenode.next2.key[3] / (1 - treenode.next2.key[4]))
+        for mps in MPS_obj_que:
+            for item in compose:
+                if mps.pname == item[1]:
+                    main_dfs(item, mps.require, ans, mps.deadline)
 
-                    rest = main_dfs(aim, number2, treenode.next2, rest, end_time)
-
-                    if treenode.next3 == None:
-                        return rest
-                    else:
-                        number3 = math.ceil(number * treenode.next3.key[3] / (1 - treenode.next3.key[4]))
-
-                        rest = main_dfs(aim, number3, treenode.next3, rest, end_time)
-
-                        if treenode.next4 == None:
-                            return rest
-                        else:
-                            number4 = math.ceil(number * treenode.next4.key[3] / (1 - treenode.next4.key[4]))
-
-                            rest = main_dfs(aim, number4, treenode.next4, rest, end_time)
-            return rest
-
-        name_list=[]
-        supply = connect('select supply."名称" FROM supply')
-        for item in supply:
-            name_list.append(item[0])
-
-        def rest_dfs(name, treenode):
-            if treenode == None:
-                return 0
-            if name == treenode.key[1]:
-                return treenode.key[5] + treenode.key[6]
-            else:
-                s1 = rest_dfs(name, treenode.next1)
-                s2 = rest_dfs(name, treenode.next2)
-                s3 = rest_dfs(name, treenode.next3)
-                s4 = rest_dfs(name, treenode.next4)
-                return max(s1, s2, s3, s4)
-
-        """剩余库存表"""
-        if time == 0:
-            rest_list = [rest_dfs(name_list[0], r), rest_dfs(name_list[1], r), rest_dfs(name_list[2], r),
-                         rest_dfs(name_list[3], r), rest_dfs(name_list[4], r), rest_dfs(name_list[5], r),
-                         rest_dfs(name_list[6], r)]
-
-        for x in MPS_obj_que:
-            if x.pname == '眼镜':  # 对应的树根节点为r
-                time = time + 1
-                ans_index = ans_index + 1
-
-                for y in range(7):
-                    rest_list[y] = main_dfs(name_list[y], x.require, r, rest_list[y], x.deadline)
-            elif x.pname == '镜框':  # 对应的树根节点为r.next1
-                time = time + 1
-                ans_index = ans_index + 1
-
-                for y in range(1, 6):
-                    rest_list[y] = main_dfs(name_list[y], x.require, r.next1, rest_list[y], x.deadline)
-
-
+def refresh_db():
+    pass
 
 ###############################################################################################
 
 
 
-
-
 def clear():
     global MPS_que_index
-    global ans_index
     global MPS_obj_que
-    MPS_que_index=0
-    ans_index=0
     global MPS_output_que
+    MPS_que_index=0
     MPS_output_que=[]
     MPS_obj_que = []
     global ans
