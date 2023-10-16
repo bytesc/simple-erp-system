@@ -59,32 +59,37 @@ async def show_result():
                 i[6] -= store_2
 
     def main_dfs(item, need_num, ans, end_time):
+        if need_num <= 0:
+            return
         need_num = math.ceil(need_num/(1-item[4]))  # 损耗
-        if need_num <= item[5]+item[6]:
+        real_need_num = need_num
+        if need_num <= item[5]+item[6]:  # 库存够
             if need_num <= item[5]:  # 工序够用
                 start_time = end_time - datetime.timedelta(days=item[7])
                 ans.append([item[1], 0, item[2], start_time, end_time])
+                real_need_num = 0
                 refresh_store(item, need_num, 0)
-                return
-            else:  # 工序不够，资材库存够用
+            else:  # 工序不够，但加上资材库存够用
                 start_time = end_time - datetime.timedelta(days=item[7] + item[8])
                 ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
+                real_need_num = 0
                 refresh_store(item, item[5], need_num - item[5])
-        else:  # 工序和资材库存都不够用
+        else:  # 库存不够（工序和资材库存加起来都不够用）
             start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
             ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
+            real_need_num = need_num - item[5] - item[6]
             refresh_store(item, item[5], item[6])
 
-        child_items=[]
+        child_items = []
         for child in compose:
-            if child[0]==item[1]:
+            if child[0] == item[1]:
                 child_items.append(child)
 
-        if len(child_items)==0:
+        if len(child_items) == 0:
             return
         else:
             for child in child_items:
-                main_dfs(child,need_num*child[3],ans,start_time)
+                main_dfs(child, real_need_num*child[3], ans, start_time)
 
     for mps in MPS_obj_que:
         for item in compose:
