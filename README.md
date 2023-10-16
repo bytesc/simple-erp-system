@@ -43,6 +43,8 @@
 ![](./readme_img/img4.png)
 可以一输出计算多个变量的公式
 ![](./readme_img/img5.png)
+可手动修改库存信息（点击计算也会根据消耗自动更新库存）
+![](./readme_img/img5.1.png)
 
 ## 数据库结构
 
