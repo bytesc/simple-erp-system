@@ -57,7 +57,7 @@ async def show_result():
         compose = []
         for i in sql_res:
             compose.append(list(i))
-        print(compose)
+        # print(compose)
 
         def refresh_store(item, store_1, store_2):
             for i in compose:
@@ -131,11 +131,15 @@ async def clear():
     global MPS_que_index
     global MPS_obj_que
     global MPS_output_que
-    MPS_que_index=0
-    MPS_output_que=[]
-    MPS_obj_que = []
     global ans
-    ans=[]
+    await mutex_for_mps.acquire()
+    try:
+        MPS_que_index=0
+        MPS_output_que=[]
+        MPS_obj_que = []
+        ans=[]
+    finally:
+        mutex_for_mps.release()
 
 
 #########################################################################################33
