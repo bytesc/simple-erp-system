@@ -52,7 +52,7 @@ async def show_result():
             """
         from connectdb import select_from_db
         sql_res = await select_from_db(sql_state)
-        print(sql_res)
+        # print(sql_res)
 
         compose = []
         for i in sql_res:
