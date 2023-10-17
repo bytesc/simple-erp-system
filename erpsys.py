@@ -1,8 +1,9 @@
 import datetime
 import math
-import threading
+import asyncio
 
-
+mutex_for_store = asyncio.Lock()  # 只允许一个修改库存
+mutex_for_mps = asyncio.Lock()
 class MpsObj:
     def __init__(self, pname, require, deadline, index):
         self.pname = pname
@@ -18,24 +19,28 @@ MPS_obj_que = []
 MPS_que_index = 0
 
 
-async def add(pname, require, deadline):
+async def add_mps(pname, require, deadline):
     global time
     global MPS_obj_que
     global MPS_que_index
+    await mutex_for_mps.acquire()
+    try:
+        if pname != '' and require != '' and deadline != '':
+            time = 0
 
-    if pname != '' and require != '' and deadline != '':
-        time = 0
+            deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d').date()
+            MPS_obj_que.append(MpsObj(pname, require, deadline, MPS_que_index))
+            MPS_output_que.append([pname, require, deadline, MPS_que_index])
+            MPS_que_index = MPS_que_index + 1  # 录入一次就+1
 
-        deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d').date()
-        MPS_obj_que.append(MpsObj(pname, require, deadline, MPS_que_index))
-        MPS_output_que.append([pname, require, deadline, MPS_que_index])
-        MPS_que_index = MPS_que_index + 1  # 录入一次就+1
+            MPS_obj_que.sort(key=lambda item: item.deadline)
+    finally:
+        mutex_for_mps.release()
 
-        MPS_obj_que.sort(key=lambda item: item.deadline)
 
-mutex = threading.Lock()  # 只允许一个修改库存
 async def show_result():
-    mutex.acquire()
+    await mutex_for_store.acquire()
+    await mutex_for_mps.acquire()
     try:
         global ans
         sql_state="""
@@ -100,7 +105,8 @@ async def show_result():
 
         await refresh_db(compose)
     finally:
-        mutex.release()
+        mutex_for_store.release()
+        mutex_for_mps.release()
 
 
 async def refresh_db(compose):
@@ -242,7 +248,7 @@ async def root(request: Request,
                     num: str = Form("0"),
                     date: str = Form("2002-11-13")):  # 定义根路由下的POST请求处理函数，接受Request对象和表单数据作为参数
     # print(pname, num, date)  # 打印表单数据
-    await add(pname, int(num), date)  # 调用add函数处理表单数据
+    await add_mps(pname, int(num), date)  # 调用add函数处理表单数据
     supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
@@ -285,11 +291,11 @@ async def root(request: Request,
     where 物料名称='{pname:s}'""".format(pname=pname,num1=int(num1),num2=int(num2))
 
     from connectdb import select_from_db, exec_sql
-    mutex.acquire()
+    await mutex_for_store.acquire()
     try:
         await exec_sql(sql_statement)
     finally:
-        mutex.release()
+        mutex_for_store.release()
     store_list = await select_from_db("""select * from store""")
     return templates.TemplateResponse("store.html", {"request": request,
                                                     "store": store_list})
