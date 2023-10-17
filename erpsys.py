@@ -36,69 +36,71 @@ async def add(pname, require, deadline):
 mutex = threading.Lock()  # 只允许一个修改库存
 async def show_result():
     mutex.acquire()
-    global ans
-    sql_state="""
-            SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
-            supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
-            inventory."供应商提前期" 
-            FROM inventory,supply,store 
-            WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
-        """
-    from connectdb import select_from_db
-    sql_res = await select_from_db(sql_state)
-    print(sql_res)
+    try:
+        global ans
+        sql_state="""
+                SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
+                supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
+                inventory."供应商提前期" 
+                FROM inventory,supply,store 
+                WHERE inventory."子物料名称"=supply."名称" AND inventory."子物料名称"=store."物料名称";
+            """
+        from connectdb import select_from_db
+        sql_res = await select_from_db(sql_state)
+        print(sql_res)
 
-    compose = []
-    for i in sql_res:
-        compose.append(list(i))
-    print(compose)
+        compose = []
+        for i in sql_res:
+            compose.append(list(i))
+        print(compose)
 
-    def refresh_store(item, store_1, store_2):
-        for i in compose:
-            if i[1] == item[1]:
-                i[5] -= store_1
-                i[6] -= store_2
+        def refresh_store(item, store_1, store_2):
+            for i in compose:
+                if i[1] == item[1]:
+                    i[5] -= store_1
+                    i[6] -= store_2
 
-    def main_dfs(item, need_num, ans, end_time):
-        if need_num <= 0:
-            return
-        need_num = math.ceil(need_num/(1-item[4]))  # 损耗
-        real_need_num = need_num
-        if need_num <= item[5]+item[6]:  # 库存够
-            if need_num <= item[5]:  # 工序够用
-                start_time = end_time - datetime.timedelta(days=item[7])
-                ans.append([item[1], 0, item[2], start_time, end_time])
-                real_need_num = 0
-                refresh_store(item, need_num, 0)
-            else:  # 工序不够，但加上资材库存够用
-                start_time = end_time - datetime.timedelta(days=item[7] + item[8])
-                ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
-                real_need_num = 0
-                refresh_store(item, item[5], need_num - item[5])
-        else:  # 库存不够（工序和资材库存加起来都不够用）
-            start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
-            ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
-            real_need_num = need_num - item[5] - item[6]
-            refresh_store(item, item[5], item[6])
+        def main_dfs(item, need_num, ans, end_time):
+            if need_num <= 0:
+                return
+            need_num = math.ceil(need_num/(1-item[4]))  # 损耗
+            real_need_num = need_num
+            if need_num <= item[5]+item[6]:  # 库存够
+                if need_num <= item[5]:  # 工序够用
+                    start_time = end_time - datetime.timedelta(days=item[7])
+                    ans.append([item[1], 0, item[2], start_time, end_time])
+                    real_need_num = 0
+                    refresh_store(item, need_num, 0)
+                else:  # 工序不够，但加上资材库存够用
+                    start_time = end_time - datetime.timedelta(days=item[7] + item[8])
+                    ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
+                    real_need_num = 0
+                    refresh_store(item, item[5], need_num - item[5])
+            else:  # 库存不够（工序和资材库存加起来都不够用）
+                start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
+                ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
+                real_need_num = need_num - item[5] - item[6]
+                refresh_store(item, item[5], item[6])
 
-        child_items = []
-        for child in compose:
-            if child[0] == item[1]:
-                child_items.append(child)
+            child_items = []
+            for child in compose:
+                if child[0] == item[1]:
+                    child_items.append(child)
 
-        if len(child_items) == 0:
-            return
-        else:
-            for child in child_items:
-                main_dfs(child, real_need_num*child[3], ans, start_time)
+            if len(child_items) == 0:
+                return
+            else:
+                for child in child_items:
+                    main_dfs(child, real_need_num*child[3], ans, start_time)
 
-    for mps in MPS_obj_que:
-        for item in compose:
-            if mps.pname == item[1]:
-                main_dfs(item, mps.require, ans, mps.deadline)
+        for mps in MPS_obj_que:
+            for item in compose:
+                if mps.pname == item[1]:
+                    main_dfs(item, mps.require, ans, mps.deadline)
 
-    await refresh_db(compose)
-    mutex.release()
+        await refresh_db(compose)
+    finally:
+        mutex.release()
 
 
 async def refresh_db(compose):
@@ -281,10 +283,13 @@ async def root(request: Request,
                num2: str = Form("0")):
     sql_statement = """update store set 工序库存={num1:d}, 资材库存={num2:d} 
     where 物料名称='{pname:s}'""".format(pname=pname,num1=int(num1),num2=int(num2))
-    from connectdb import select_from_db,exec_sql
+
+    from connectdb import select_from_db, exec_sql
     mutex.acquire()
-    await exec_sql(sql_statement)
-    mutex.release()
+    try:
+        await exec_sql(sql_statement)
+    finally:
+        mutex.release()
     store_list = await select_from_db("""select * from store""")
     return templates.TemplateResponse("store.html", {"request": request,
                                                     "store": store_list})
