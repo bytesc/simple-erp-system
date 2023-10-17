@@ -238,15 +238,21 @@ async def get_supply_available():
             supply_available.append(item)
     return supply_available
 
+
 @app.get("/")
-async def root(request: Request):  # 定义根路由处理函数，接受Request对象作为参数
+async def root(request: Request,
+               action: str = ""):  # 定义根路由处理函数，接受Request对象作为参数
+    if action == "show":
+        await show_result()
+    if action == "clear":
+        await clear()  # 调用clear函数
     supply_available = await get_supply_available()
     return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
                                                      "que": MPS_output_que,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
-@app.post("/erp/")
+@app.post("/")
 async def root(request: Request,
                     pname: str = Form("default"),
                     num: str = Form("0"),
@@ -259,21 +265,6 @@ async def root(request: Request,
                                                      "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 
-@app.get("/show/")
-async def root(request: Request):  # 定义/show/路由的GET请求处理函数，接受Request对象作为参数
-    await show_result()
-    supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
-                                                     "que": MPS_output_que,
-                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
-
-@app.get("/clear/")
-async def root(request: Request):  # 定义/clear/路由的GET请求处理函数，接受Request对象作为参数
-    await clear()  # 调用clear函数
-    supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ans,
-                                                     "que": MPS_output_que,
-                                                     "supply_available":supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
 #########################################################################
 
@@ -318,11 +309,20 @@ async def get_x_available():
 
 
 @app.get("/func/")
-async def root(request: Request):
+async def root(request: Request,
+               action: str = ""):
+    out = []
+    if action == "show":
+        await show_func()
+        out = func_ans_que
+    if action == "clear":
+        await func_clear()
+        out = func_que
     x_available = await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_que,
-                                                    "x_available":x_available})
+                                                    "func_output": out,
+                                                    "x_available": x_available})
+
 
 @app.post("/func/")
 async def root(request: Request,
@@ -332,24 +332,7 @@ async def root(request: Request,
     x_available=await get_x_available()
     return templates.TemplateResponse("func.html", {"request": request,
                                                     "func_output": func_que,
-                                                    "x_available":x_available})
-
-@app.get("/func_show/")
-async def root(request: Request):
-    await show_func()
-    x_available = await get_x_available()
-    return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_ans_que,
-                                                    "x_available":x_available})
-
-@app.get("/func_clear/")
-async def root(request: Request):
-    await func_clear()
-    x_available = await get_x_available()
-    return templates.TemplateResponse("func.html", {"request": request,
-                                                    "func_output": func_que,
                                                     "x_available": x_available})
-
 
 
 if __name__ == "__main__":

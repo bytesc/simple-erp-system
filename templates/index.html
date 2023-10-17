@@ -98,7 +98,7 @@
         <a href="/func">资产管理</a>
         <a href="/store" >库存管理</a>
         <h1>ERP 物料管理计算</h1>
-        <form action="/erp/" enctype="application/x-www-form-urlencoded" method="post">
+        <form action="/" enctype="application/x-www-form-urlencoded" method="post">
             <label>
                 物料：<br>
                 <select name="pname" required>
@@ -116,8 +116,8 @@
             <input type="submit" value="添加">
         </form>
         <h2>MPS 计划队列</h2>
-        <a href="/show">计算</a>
-        <a href="/clear">清空</a>
+        <a href="/?action=show">计算</a>
+        <a href="/?action=clear">清空</a>
         <table>
             <thead>
                 <tr>
