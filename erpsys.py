@@ -80,14 +80,12 @@ async def show_result():
 
         def mark_depth(item, deep):  # 标记所有节点深度
             child_items = []
-            for i in compose:
-                if i.child == item.child and i.father == item.father:
-                    if i.depth == -1:
-                        i.depth = deep
-                    else:  # 存在子父相同但层次不同的节点
-                        i2 = copy.deepcopy(i)  # 新建节点
-                        i2.depth = deep
-                        compose.append(i2)
+            if item.depth == -1:
+                item.depth = deep
+            else:  # 存在子父相同但层次不同的节点
+                i2 = copy.deepcopy(item)  # 新建节点
+                i2.depth = deep
+                compose.append(i2)
 
             for child in compose:
                 if child.father == item.child and (child.depth == -1 or child.depth == deep+1):
