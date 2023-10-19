@@ -1,9 +1,12 @@
+import copy
 import datetime
 import math
 import asyncio
 
 mutex_for_store = asyncio.Lock()  # 只允许一个修改库存
 mutex_for_mps = asyncio.Lock()
+
+
 class MpsObj:
     def __init__(self, pname, require, deadline, index):
         self.pname = pname
@@ -38,12 +41,29 @@ async def add_mps(pname, require, deadline):
         mutex_for_mps.release()
 
 
+class Node:
+    def __init__(self, father, child, way, comp_num,
+                 loss_rate, store_1, store_2, adv_work, adv_make, adv_supply):
+        self.father = father
+        self.child = child
+        self.way = way  # 调配方式
+        self.comp_num = comp_num
+        self.loss_rate = loss_rate
+        self.store_1 = store_1  # 工序库存
+        self.store_2 = store_2  # 资材库存
+        self.adv_work = adv_work  # 作业提前期
+        self.adv_make = adv_make  # 配料提前期
+        self.adv_supply = adv_supply  # 供应商提前期
+        self.depth = -1  # 节点深度
+        self.child_depth = -1  # 子树的深度
+
+
 async def show_result():
     await mutex_for_store.acquire()
     await mutex_for_mps.acquire()
     try:
         global ans
-        sql_state="""
+        sql_state = """
                 SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
                 supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
                 inventory."供应商提前期" 
@@ -56,51 +76,91 @@ async def show_result():
 
         compose = []
         for i in sql_res:
-            compose.append(list(i))
-        # print(compose)
+            compose.append(Node(*i))
 
-        def refresh_store(item, store_1, store_2):
+        def mark_depth(item, deep):  # 标记所有节点深度
+            child_items = []
             for i in compose:
-                if i[1] == item[1]:
-                    i[5] -= store_1
-                    i[6] -= store_2
+                if i.child == item.child and i.father == item.father:
+                    if i.depth == -1:
+                        i.depth = deep
+                    else:  # 存在子父相同但层次不同的节点
+                        i2 = copy.deepcopy(i)  # 新建节点
+                        i2.depth = deep
+                        compose.append(i2)
+
+            for child in compose:
+                if child.father == item.child and (child.depth == -1 or child.depth == deep+1):
+                    child_items.append(child)
+            if len(child_items) == 0:
+                return
+            else:
+                for child in child_items:
+                    mark_depth(child, deep+1)
+
+        def mark_child_depth(item):  # 标记所有节点子树最大深度
+            child_items = []
+            for child in compose:
+                if child.father == item.child and child.depth == item.depth+1:
+                    child_items.append(child)
+
+            if len(child_items) == 0:
+                item.child_depth = item.depth
+                return
+            else:
+                for child in child_items:
+                    mark_child_depth(child)
+                for child in child_items:
+                    item.child_depth = max(item.child_depth, child.child_depth)
+
+        def refresh_store(item, store_1, store_2):  # 刷新库存
+            for i in compose:
+                if i.child == item.child:
+                    i.store_1 -= store_1
+                    i.store_2 -= store_2
 
         def main_dfs(item, need_num, ans, end_time):
             if need_num <= 0:
                 return
-            need_num = math.ceil(need_num/(1-item[4]))  # 损耗
+            need_num = math.ceil(need_num/(1-item.loss_rate))  # 损耗
             real_need_num = need_num
-            if need_num <= item[5]+item[6]:  # 库存够
-                if need_num <= item[5]:  # 工序够用
-                    start_time = end_time - datetime.timedelta(days=item[7])
-                    ans.append([item[1], 0, item[2], start_time, end_time])
+            if need_num <= item.store_1+item.store_2:  # 库存够
+                if need_num <= item.store_1:  # 工序够用
+                    start_time = end_time - datetime.timedelta(days=item.adv_supply)
+                    ans.append([item.child, 0, item.way, start_time, end_time])
                     real_need_num = 0
                     refresh_store(item, need_num, 0)
                 else:  # 工序不够，但加上资材库存够用
-                    start_time = end_time - datetime.timedelta(days=item[7] + item[8])
-                    ans.append([item[1], need_num - item[5], item[2], start_time, end_time])
+                    start_time = end_time - datetime.timedelta(days=item.adv_supply + item.adv_make)
+                    ans.append([item.child, need_num - item.store_1, item.way, start_time, end_time])
                     real_need_num = 0
-                    refresh_store(item, item[5], need_num - item[5])
+                    refresh_store(item, item.store_1, need_num - item.store_1)
             else:  # 库存不够（工序和资材库存加起来都不够用）
-                start_time = end_time - datetime.timedelta(days=item[7] + item[8] + item[9])
-                ans.append([item[1], need_num - item[5] - item[6], item[2], start_time, end_time])
-                real_need_num = need_num - item[5] - item[6]
-                refresh_store(item, item[5], item[6])
+                start_time = end_time - datetime.timedelta(days=item.adv_supply + item.adv_make + item.adv_work)
+                ans.append([item.child, need_num - item.store_2 - item.store_1, item.way, start_time, end_time])
+                real_need_num = need_num - item.store_1 - item.store_2
+                refresh_store(item, item.store_1, item.store_2)
 
             child_items = []
             for child in compose:
-                if child[0] == item[1]:
+                if child.father == item.child and child.depth == item.depth+1:
                     child_items.append(child)
 
             if len(child_items) == 0:
                 return
             else:
+                child_items.sort(key=lambda item: -item.child_depth)  # 按子树深度倒序，先遍历深的
                 for child in child_items:
-                    main_dfs(child, real_need_num*child[3], ans, start_time)
+                    main_dfs(child, real_need_num*child.comp_num, ans, start_time)
 
-        for mps in MPS_obj_que:
+        for item in compose:  # 找根节点计算深度
+            if item.father is None:
+                mark_depth(item, 0)
+                mark_child_depth(item)
+
+        for mps in MPS_obj_que:  # 遍历 mps 队列计算结果
             for item in compose:
-                if mps.pname == item[1]:
+                if mps.pname == item.child:
                     main_dfs(item, mps.require, ans, mps.deadline)
 
         await refresh_db(compose)
@@ -113,13 +173,13 @@ async def refresh_db(compose):
     from connectdb import exec_sql
     for item in compose:
         sql_statement = """UPDATE store SET"""
-        sql_statement += " 工序库存=" + str(item[5])
-        sql_statement += " where 物料名称='" + str(item[1])+"'"
+        sql_statement += " 工序库存=" + str(item.store_1)
+        sql_statement += " where 物料名称='" + str(item.child)+"'"
         # print(sql_statement)
         await exec_sql(sql_statement)
         sql_statement = """UPDATE store SET"""
-        sql_statement += " 资材库存=" + str(item[6])
-        sql_statement += " where 物料名称='" + str(item[1])+"'"
+        sql_statement += " 资材库存=" + str(item.store_2)
+        sql_statement += " where 物料名称='" + str(item.child)+"'"
         # print(sql_statement)
         await exec_sql(sql_statement)
     return
