@@ -99,21 +99,26 @@ if __name__ == "__main__":
 
 ```txt
 │  connectdb.py
-│  erpdata.db
-│  erpsys.py
-│  LICENSE
-│  README.md
-│  requirements.txt
+├─ERP
+│      ERP.py
+│      MPS.py
+│      Tree.py
 ├─templates
 │      func.html
 │      index.html
 ├─readme_img
 ├─sql
-       structure_data.sql
-       structure_only.sql
+│      structure_data.sql
+│      structure_only.sql
+│  erpdata.db
+│  erpsys.py
+│  LICENSE
+│  README.md
+│  requirements.txt
 ```
 
-- `erpsys.py` 是最主要的源代码文件，包含服务端代码和核心算法，也是项目的运行入口
+- `erpsys.py` 是源代码文件，包含服务端代码，也是项目的运行入口
+- `ERP` 文件夹下存放源代码文件，包含核心算法代码
 - `connectdb.py` 包含数据库配置，连接，查询程序
 - `erpdata.db` sqlite3 数据库文件
 - `templates` 文件夹存放待渲染的 html 模板文件
