@@ -60,10 +60,10 @@ class Node:
 
 
 class ComposeTree:
-    def __init__(self, MpsList, ans, mutex_for_store):
+    def __init__(self, MpsList,mutex_for_store):
         self.mutex_for_store = mutex_for_store
         self.MpsList = MpsList
-        self.ans = ans
+        self.ans = []
         self.compose = []
 
     async def refresh_db(self, compose):
@@ -82,6 +82,8 @@ class ComposeTree:
         return
 
     async def show_result(self):
+        self.compose = []
+        self.ans = []
         await self.mutex_for_store.acquire()
         await self.MpsList.mutex_for_mps.acquire()
         try:
@@ -187,17 +189,20 @@ class ComposeTree:
             self.mutex_for_store.release()
             self.MpsList.mutex_for_mps.release()
 
+    async def clear(self):
+        self.ans = []
+
 
 class ERP:
     def __init__(self, mutex_for_store):
-        self.ans = []
         self.MpsList = MpsList()
         self.mutex_for_store = mutex_for_store
-        self.ComposeTree = ComposeTree(self.MpsList, self.ans, mutex_for_store)
+        self.ComposeTree = ComposeTree(self.MpsList, mutex_for_store)
 
     async def clear(self):
         await self.MpsList.clear_mps()
-        self.ans = []
+        await self.ComposeTree.clear()
+
 
 
 
@@ -309,7 +314,7 @@ async def root(request: Request,
     if action == "clear":
         await ERPobj.clear()  # 调用clear函数
     supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ans,
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ComposeTree.ans,
                                                      "que": ERPobj.MpsList.MPS_output_que,
                                                      "supply_available": supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
@@ -322,7 +327,7 @@ async def root(request: Request,
     # print(pname, num, date)  # 打印表单数据
     await ERPobj.MpsList.add_mps(pname, int(num), date)  # 调用add函数处理表单数据
     supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ans,
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ComposeTree.ans,
                                                      "que": ERPobj.MpsList.MPS_output_que,
                                                      "supply_available": supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
