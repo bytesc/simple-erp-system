@@ -60,15 +60,15 @@ class Node:
 
 
 class ComposeTree:
-    def __init__(self, MpsList,mutex_for_store):
+    def __init__(self, MpsList, ans, mutex_for_store):
         self.mutex_for_store = mutex_for_store
         self.MpsList = MpsList
-        self.ans = []
+        self.ans = ans
         self.compose = []
 
-    async def refresh_db(self, compose):
+    async def refresh_db(self):
         from connectdb import exec_sql
-        for item in compose:
+        for item in self.compose:
             sql_statement = """UPDATE store SET"""
             sql_statement += " 工序库存=" + str(item.store_1)
             sql_statement += " where 物料名称='" + str(item.child) + "'"
@@ -82,8 +82,8 @@ class ComposeTree:
         return
 
     async def show_result(self):
-        self.compose = []
-        self.ans = []
+        self.compose.clear()
+        self.ans.clear()  # 这里不能ans=[],这样会让ans指向另一个内存空间上的另一个新数组，而不是init传来的数组
         await self.mutex_for_store.acquire()
         await self.MpsList.mutex_for_mps.acquire()
         try:
@@ -184,37 +184,33 @@ class ComposeTree:
                     if mps.pname == item.child:
                         main_dfs(item, mps.require, self.ans, mps.deadline)
 
-            await self.refresh_db(self.compose)
+            await self.refresh_db()
         finally:
             self.mutex_for_store.release()
             self.MpsList.mutex_for_mps.release()
 
     async def clear(self):
-        self.ans = []
+        self.ans.clear()  # 这里不能ans=[],这样会让ans指向另一个内存空间上的另一个新数组，而不是init传来的数组
 
 
 class ERP:
     def __init__(self, mutex_for_store):
+        self.ans = []
         self.MpsList = MpsList()
         self.mutex_for_store = mutex_for_store
-        self.ComposeTree = ComposeTree(self.MpsList, mutex_for_store)
+        self.ComposeTree = ComposeTree(self.MpsList, self.ans, mutex_for_store)
 
     async def clear(self):
         await self.MpsList.clear_mps()
         await self.ComposeTree.clear()
 
 
-
-
-
-#########################################################################################33
-#####################################################################
-
+###################################################################################
 
 func_index = 0
-func_obj_que=[]
-func_que=[]
-func_ans_que=[]
+func_obj_que = []
+func_que = []
+func_ans_que = []
 
 
 class collect():
@@ -283,7 +279,7 @@ async def func_clear():
     func_ans_que = []
 
 
-##############################################################################################33
+##############################################################################################
 
 from fastapi import FastAPI, Form  # 导入FastAPI和Form
 from starlette.requests import Request  # 导入Request类
@@ -314,7 +310,7 @@ async def root(request: Request,
     if action == "clear":
         await ERPobj.clear()  # 调用clear函数
     supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ComposeTree.ans,
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ans,
                                                      "que": ERPobj.MpsList.MPS_output_que,
                                                      "supply_available": supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
@@ -327,14 +323,11 @@ async def root(request: Request,
     # print(pname, num, date)  # 打印表单数据
     await ERPobj.MpsList.add_mps(pname, int(num), date)  # 调用add函数处理表单数据
     supply_available = await get_supply_available()
-    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ComposeTree.ans,
+    return templates.TemplateResponse("index.html", {"request": request, "ans": ERPobj.ans,
                                                      "que": ERPobj.MpsList.MPS_output_que,
                                                      "supply_available": supply_available})  # 返回使用模板"index.html"渲染的响应，传递request、ans和que作为模板变量
 
-
-
 #########################################################################
-
 
 @app.get("/store/")
 async def root(request: Request):
