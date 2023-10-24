@@ -113,11 +113,11 @@ class ComposeTree:
                 self.main_dfs(child, real_need_num * comp_num, ans, start_time)
 
     async def show_result(self):
-        self.compose.clear()
-        self.ans.clear()  # 这里不能ans=[],这样会让ans指向另一个内存空间上的另一个新数组，而不是init传来的数组
         await self.mutex_for_store.acquire()
         await self.MpsList.mutex_for_mps.acquire()
         try:
+            self.compose.clear()
+            self.ans.clear()  # 这里不能ans=[],这样会让ans指向另一个内存空间上的另一个新数组，而不是init传来的数组
             sql_state = """
                     SELECT inventory."父物料名称", inventory."子物料名称", supply."调配方式", inventory."构成数", 
                     supply."损耗率", store."工序库存",store."资材库存",supply."作业提前期",inventory."配料提前期",
@@ -136,6 +136,7 @@ class ComposeTree:
                     if item.pname == mps.pname:
                         root = Node(item)
                         self.build_tree(root, 0)
+                        self.mark_child_depth(root)
                         self.main_dfs(root, mps.require, self.ans, mps.deadline)
 
             await self.refresh_db()
@@ -143,7 +144,7 @@ class ComposeTree:
             self.mutex_for_store.release()
             self.MpsList.mutex_for_mps.release()
 
-    async def clear(self):
-        self.ans.clear()  # 这里不能ans=[],这样会让ans指向另一个内存空间上的另一个新数组，而不是init传来的数组
+    async def clear_tree(self):
+        pass
 
 

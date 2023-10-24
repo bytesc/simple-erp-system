@@ -10,4 +10,5 @@ class ERP:
 
     async def clear(self):
         await self.MpsList.clear_mps()
-        await self.ComposeTree.clear()
+        await self.ComposeTree.clear_tree()
+        self.ans.clear()
