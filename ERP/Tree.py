@@ -154,9 +154,12 @@ class ComposeTree:
                     mark_child_depth(item)
 
             for mps in self.MpsList.MPS_obj_que:  # 遍历 mps 队列计算结果
+                treated = []  # 防止处理两遍
                 for item in self.compose:
-                    if mps.pname == item.pname and item.depth == -1:
-                        main_dfs(item, mps.require, self.ans, mps.deadline)
+                    if mps.pname == item.pname and item.depth != -1:
+                        if item not in treated:
+                            main_dfs(item, mps.require, self.ans, mps.deadline)
+                            treated.append(item)
 
             await self.refresh_db()
         finally:
