@@ -155,7 +155,7 @@ class ComposeTree:
 
             for mps in self.MpsList.MPS_obj_que:  # 遍历 mps 队列计算结果
                 for item in self.compose:
-                    if mps.pname == item.pname:
+                    if mps.pname == item.pname and item.depth == -1:
                         main_dfs(item, mps.require, self.ans, mps.deadline)
 
             await self.refresh_db()
