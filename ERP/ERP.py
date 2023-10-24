@@ -6,7 +6,6 @@ class ERP:
     def __init__(self, mutex_for_store):
         self.ans = []
         self.MpsList = MpsList()
-        self.mutex_for_store = mutex_for_store
         self.ComposeTree = ComposeTree(self.MpsList, self.ans, mutex_for_store)
 
     async def clear(self):
