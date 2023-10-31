@@ -82,7 +82,7 @@
 pip install -r requirements.txt
 ```
 运行
-```
+```bash
 python erpsys.py
 ```
 浏览器访问 [http://127.0.0.1:8080](http://127.0.0.1:8080)即可进入系统
