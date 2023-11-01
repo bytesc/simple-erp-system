@@ -60,15 +60,19 @@
 
 数据库结构
 ![](./readme_img/img6.png)
+
 `supply`物料信息表
 ![](./readme_img/img7.png)
 ![](./readme_img/img8.png)
+
 `inventory`物料构成清单
 ![](./readme_img/img9.png)
 ![](./readme_img/img10.png)
+
 `store`库存表
 ![](./readme_img/img11.png)
 ![](./readme_img/img12.png)
+
 `bom`资产负债信息表
 ![](./readme_img/img13.png)
 ![](./readme_img/img14.png)
