@@ -4,8 +4,6 @@
 
 [个人网站：www.bytesc.top](http://www.bytesc.top) 包含项目 📌 [在线演示](http://www.bytesc.top#erp)  📌 
 
-[个人博客：blog.bytesc.top](http://blog.bytesc.top)
-
 🔔 如有项目相关问题，欢迎在本项目提出`issue`，我一般会在 24 小时内回复。
 
 🚩 欢迎参考、复用代码，但请遵守`LICENSE`文件中的开源协议（参考翻译见本文档末尾）。对本仓库内的实质性内容（包括但不限于数据，图片，文档）保留著作权。
